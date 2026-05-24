@@ -48,6 +48,8 @@
     "updater": {},
     "sql": {},
     "store": {},
-    "window-state": {}
+    "window-state": {},
+    "global-shortcut": {},
+    "process": {}
   }
 }

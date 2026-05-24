@@ -33,7 +33,9 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
         .build()?;
 
     let app_handle = app.clone();
-    TrayIconBuilder::new()
+    let tray_icon = app.default_window_icon().cloned();
+    
+    let mut builder = TrayIconBuilder::new()
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(move |app, event| match event.id().as_ref() {
@@ -41,10 +43,15 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
             "tray-pause" => emit_tray_action(app, "pause"),
             "tray-resume" => emit_tray_action(app, "resume"),
             "tray-quick-break" => emit_tray_action(app, "quick-break"),
-            "tray-quit" => app_handle.exit(0),
+            "tray-quit" => app.exit(0),
             _ => {}
-        })
-        .build(app)?;
+        });
+
+    if let Some(icon) = tray_icon {
+        builder = builder.icon(icon);
+    }
+
+    builder.build(app)?;
 
     Ok(())
 }
