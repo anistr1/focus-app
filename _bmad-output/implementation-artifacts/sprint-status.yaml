@@ -1,0 +1,73 @@
+# generated: 2026-05-24T00:00:00+01:00
+# last_updated: 2026-05-24T05:15:00+01:00
+# project: Focus app
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+#
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog -> in-progress: Automatically when first story is created (via create-story)
+#   - in-progress -> done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-05-24T00:00:00+01:00
+last_updated: 2026-05-24T05:15:00+01:00
+project: Focus app
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  epic-1: in-progress
+  1-1-bootstrap-the-desktop-app-shell: review
+  1-2-complete-first-run-onboarding: review
+  1-3-run-a-reliable-focus-timer: review
+  1-4-add-the-full-breathing-ritual-experience: review
+  1-5-persist-local-state-and-recover-interrupted-sessions: review
+  1-6-deliver-accessibility-baseline-for-core-flows: review
+  epic-1-retrospective: optional
+  epic-2: in-progress
+  2-1-record-completed-sessions-and-show-session-history: review
+  2-2-surface-calm-analytics-and-streak-insights: review
+  2-3-manage-core-preferences-in-settings: review
+  2-4-export-local-telemetry-summary-as-json: review
+  epic-2-retrospective: optional
+  epic-3: in-progress
+  3-1-control-focus-sessions-from-the-system-tray: review
+  3-2-launch-a-mini-ritual-and-silent-background-focus-session: review
+  3-3-deliver-native-notifications-for-focus-events: review
+  3-4-persist-window-state-and-startup-behavior: review
+  epic-3-retrospective: optional
+  epic-4: in-progress
+  4-1-deliver-silent-background-updates-safely: review
+  4-2-complete-accessibility-and-reduced-motion-hardening: review
+  4-3-polish-performance-responsiveness-and-recovery-ux: review
+  epic-4-retrospective: optional
+
+
+
+

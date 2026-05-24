@@ -1,0 +1,26 @@
+FOCUS APP - INSTALLER QUICK GUIDE
+
+Location of this clean project:
+C:\Users\Anis\Desktop\Vibe coding\Focus app\FocusApp-Clean
+
+1) Open terminal in this folder
+
+2) Install dependencies
+npm install
+
+3) Build installer
+npm run tauri:build
+
+4) Find installer output
+src-tauri\target\release\bundle\
+
+Typical installer files:
+- .msi (Windows Installer)
+- .exe (if enabled by target)
+
+5) Install app
+Double-click the generated .msi or .exe and follow setup.
+
+Notes
+- If build fails, install Rust toolchain (rustup) and Visual Studio C++ build tools.
+- WebView2 Runtime is required on Windows.

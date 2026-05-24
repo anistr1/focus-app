@@ -1,0 +1,23 @@
+installation:
+  version: 6.7.1
+  installDate: 2026-05-23T23:05:08.034Z
+  lastUpdated: 2026-05-23T23:05:08.034Z
+modules:
+  - name: core
+    version: 6.7.1
+    installDate: 2026-05-23T23:05:06.415Z
+    lastUpdated: 2026-05-23T23:05:08.029Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
+  - name: bmm
+    version: 6.7.1
+    installDate: 2026-05-23T23:05:04.412Z
+    lastUpdated: 2026-05-23T23:05:08.034Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
+ides:
+  - codex
+  - gemini
+  - antigravity

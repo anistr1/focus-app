@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  font-family:
+    Inter, Geist, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  background: hsl(222 14% 8%);
+  --bg-base: hsl(222 14% 8%);
+  --bg-surface: hsl(222 12% 12%);
+  --bg-elevated: hsl(222 10% 16%);
+  --text-primary: hsl(0 0% 94%);
+  --text-secondary: hsl(222 8% 56%);
+  --accent: hsl(196 80% 58%);
+  --accent-soft: hsl(196 60% 20%);
+  --success: hsl(152 60% 44%);
+  --gradient-breath-start: hsl(222 60% 18%);
+  --gradient-breath-end: hsl(196 70% 30%);
+  --border-subtle: hsl(222 12% 20%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 32%
+    ),
+    linear-gradient(180deg, var(--bg-base), hsl(222 14% 7%));
+}
+
+.onboarding-screen {
+  background:
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 38%
+    ),
+    linear-gradient(180deg, var(--bg-base), hsl(222 14% 7%));
+}
+
+.onboarding-breath {
+  animation: onboarding-breath-loop 4s ease-in-out infinite;
+}
+
+.onboarding-breath-static {
+  opacity: 0.9;
+}
+
+.breathing-circle {
+  transform: scale(1);
+  opacity: 0.9;
+  transition:
+    transform 300ms ease-in-out,
+    opacity 300ms ease-in-out;
+}
+
+.breathing-circle.phase-inhale {
+  transform: scale(1.3);
+  opacity: 1;
+}
+
+.breathing-circle.phase-hold {
+  transform: scale(1.3);
+  opacity: 0.95;
+}
+
+.breathing-circle.phase-exhale {
+  transform: scale(1);
+  opacity: 0.86;
+}
+
+.breathing-circle.animation-reduced {
+  transition-duration: 160ms;
+}
+
+.breathing-circle.animation-minimal {
+  transition: none;
+}
+
+@keyframes onboarding-breath-loop {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.82;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-breath {
+    animation: onboarding-breath-reduced 2s ease-in-out infinite;
+  }
+
+  .breathing-circle {
+    transform: scale(1) !important;
+    transition: opacity 300ms ease-in-out;
+  }
+
+  .breathing-circle.phase-inhale,
+  .breathing-circle.phase-hold,
+  .breathing-circle.phase-exhale {
+    opacity: 0.82;
+  }
+
+  @keyframes onboarding-breath-reduced {
+    0%,
+    100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.analytics-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.analytics-bar-item {
+  display: flex;
+  min-width: 2rem;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.analytics-bar {
+  width: 100%;
+  border-radius: 0.6rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 70%, white),
+    color-mix(in srgb, var(--accent-soft) 62%, black)
+  );
+  transition: height 360ms ease-in-out;
+}
+
+.analytics-bars.motion-reduce .analytics-bar {
+  transition: none;
+}
