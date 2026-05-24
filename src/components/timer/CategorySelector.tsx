@@ -11,6 +11,7 @@ export function CategorySelector({ categories, selectedId, onChange }: CategoryS
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -27,6 +28,13 @@ export function CategorySelector({ categories, selectedId, onChange }: CategoryS
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (isOpen && focusedIndex === -1) {
+      const idx = categories.findIndex(c => c.id === selectedId);
+      setFocusedIndex(idx >= 0 ? idx : 0);
+    }
+  }, [isOpen, selectedId, categories, focusedIndex]);
 
   useEffect(() => {
     if (isCreating && inputRef.current) {
@@ -46,11 +54,44 @@ export function CategorySelector({ categories, selectedId, onChange }: CategoryS
     setNewCategoryName("");
   }
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!isOpen) {
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    if (isCreating) return;
+
+    if (e.key === "Escape") {
+      setIsOpen(false);
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedIndex((i) => (i + 1) % categories.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedIndex((i) => (i - 1 + categories.length) % categories.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (focusedIndex >= 0 && focusedIndex < categories.length) {
+        onChange(categories[focusedIndex].id);
+        setIsOpen(false);
+      }
+    }
+  }
+
   return (
-    <div className="relative inline-block text-left" ref={containerRef}>
+    <div className="relative inline-block text-left" ref={containerRef} onKeyDown={handleKeyDown}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
         className="flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-4 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-white transition-colors shadow-sm"
       >
         <span 
@@ -64,19 +105,29 @@ export function CategorySelector({ categories, selectedId, onChange }: CategoryS
       </button>
 
       {isOpen && (
-        <div className="absolute left-1/2 mt-2 w-48 -translate-x-1/2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-[0_10px_30px_rgba(0,0,0,0.5)] z-50 overflow-hidden">
+        <div 
+          className="absolute left-1/2 mt-2 w-48 -translate-x-1/2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-[0_8px_24px_rgba(0,0,0,0.3)] z-50 overflow-hidden"
+          role="listbox"
+          aria-activedescendant={focusedIndex >= 0 ? `cat-${categories[focusedIndex].id}` : undefined}
+        >
           <div className="max-h-64 overflow-y-auto p-1">
-            {categories.map((cat) => (
+            {categories.map((cat, index) => (
               <button
                 key={cat.id}
+                id={`cat-${cat.id}`}
+                role="option"
+                aria-selected={cat.id === selectedId}
                 type="button"
                 onClick={() => {
                   onChange(cat.id);
                   setIsOpen(false);
                 }}
+                onMouseEnter={() => setFocusedIndex(index)}
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                   cat.id === selectedId 
                     ? "bg-[var(--bg-elevated)] text-white" 
+                    : index === focusedIndex
+                    ? "bg-[var(--bg-elevated)] text-white opacity-90"
                     : "text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-white"
                 }`}
               >
@@ -97,7 +148,10 @@ export function CategorySelector({ categories, selectedId, onChange }: CategoryS
                   placeholder="Category name..."
                   className="w-full bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
                   onKeyDown={(e) => {
-                    if (e.key === "Escape") setIsCreating(false);
+                    if (e.key === "Escape") {
+                      setIsCreating(false);
+                      setIsOpen(false);
+                    }
                   }}
                 />
               </form>
@@ -120,3 +174,4 @@ export function CategorySelector({ categories, selectedId, onChange }: CategoryS
     </div>
   );
 }
+

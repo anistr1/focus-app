@@ -91,7 +91,7 @@ export function AnalyticsCard() {
                 style={{ height: `${Math.max(8, Math.round((point.minutes / trendMax) * 100))}%` }}
                 aria-label={`${point.dayLabel}: ${point.minutes} minutes`}
               />
-              <span className="mt-2 text-[9px] font-medium text-[var(--text-secondary)] whitespace-nowrap">{point.dayLabel}</span>
+              <span className="mt-2 text-xs font-medium text-[var(--text-secondary)] whitespace-nowrap">{point.dayLabel}</span>
             </div>
           ))}
         </div>

@@ -11,7 +11,6 @@ export type UpdaterState = {
   installReady: boolean;
 };
 
-const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
 const IS_TEST_RUNTIME =
   typeof navigator !== "undefined" && navigator.userAgent.toLowerCase().includes("jsdom");
 
@@ -56,9 +55,9 @@ export function useUpdaterState(): { state: UpdaterState; installWhenSafe: () =>
           setReadyVersion(available.version);
           setLastError(null);
         }
-      } catch {
+      } catch (error) {
         if (!cancelled) {
-          setLastError("Update check failed. The app will try again quietly.");
+          console.warn("Update check failed quietly on startup:", error);
         }
       } finally {
         if (!cancelled) {
@@ -68,13 +67,9 @@ export function useUpdaterState(): { state: UpdaterState; installWhenSafe: () =>
     };
 
     void checkForUpdates();
-    const interval = window.setInterval(() => {
-      void checkForUpdates();
-    }, UPDATE_CHECK_INTERVAL_MS);
 
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
     };
   }, []);
 

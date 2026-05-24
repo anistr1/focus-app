@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BreathingRitualCard } from "../breathing/BreathingRitualCard";
+import { CompletionState } from "./CompletionState";
 import {
   applyTrayAction,
   createTimerState,
@@ -10,6 +11,7 @@ import {
   startTimer,
   stopTimer,
   tickTimer,
+  adjustTime,
   type TimerState
 } from "../../features/timer/timer-domain";
 import {
@@ -29,7 +31,8 @@ import {
   shouldNotifyStreakMilestone,
   WINDOWS_NOTIFICATION_GUIDANCE
 } from "../../features/notifications/notification-service";
-import { readSessionHistory } from "../../features/sessions/session-history";
+import { readSessionHistory, SESSION_HISTORY_UPDATED_EVENT } from "../../features/sessions/session-history";
+import { buildAnalyticsSummary } from "../../features/analytics/analytics-summary";
 import { CategorySelector } from "./CategorySelector";
 
 function formatClock(totalMs: number): string {
@@ -61,6 +64,11 @@ export function FocusTimerCard() {
   const [pendingRecovery, setPendingRecovery] = useState(() => readCheckpoint(Date.now()));
   const [activeCompletionKey, setActiveCompletionKey] = useState<string | null>(null);
   const [notificationWarning, setNotificationWarning] = useState<string | null>(null);
+  
+  const [todayFocusMs, setTodayFocusMs] = useState(() => {
+    return buildAnalyticsSummary(readSessionHistory(), "today").periodTotalMs;
+  });
+
   const previousStatusRef = useRef(timer.status);
   const inactivityReminderIdRef = useRef<number | null>(null);
   const inactivityReminderSentRef = useRef(false);
@@ -109,6 +117,14 @@ export function FocusTimerCard() {
   }, []);
 
   useEffect(() => {
+    const onHistory = () => {
+      setTodayFocusMs(buildAnalyticsSummary(readSessionHistory(), "today").periodTotalMs);
+    };
+    window.addEventListener(SESSION_HISTORY_UPDATED_EVENT, onHistory);
+    return () => window.removeEventListener(SESSION_HISTORY_UPDATED_EVENT, onHistory);
+  }, []);
+
+  useEffect(() => {
     if (timer.status !== "running") {
       return;
     }
@@ -120,6 +136,12 @@ export function FocusTimerCard() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        setTimer((current) => stopTimer(current));
+        return;
+      }
+
       if (!(event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "f")) {
         return;
       }
@@ -330,23 +352,28 @@ export function FocusTimerCard() {
     setPendingRecovery(null);
   }
 
-  if (isRitualActive) {
-    const trayMode = ritualMode === "tray";
-    return (
-      <BreathingRitualCard
-        durationMs={trayMode ? TRAY_MINI_RITUAL_DURATION_MS : ritualDurationMs}
-        compact={trayMode}
-        forceReducedMotion={trayMode}
-        onComplete={completeRitualAndStart}
-        onSkip={completeRitualAndStart}
-      />
-    );
-  }
+  const [renderRitual, setRenderRitual] = useState(isRitualActive);
+  useEffect(() => {
+    if (isRitualActive) setRenderRitual(true);
+    else {
+      const t = setTimeout(() => setRenderRitual(false), 1000);
+      return () => clearTimeout(t);
+    }
+  }, [isRitualActive]);
 
-  const showPause = timer.status === "running";
-  const showResume = timer.status === "paused";
-  const showStart = timer.status === "idle" || timer.status === "stopped" || timer.status === "completed";
+  const isCompleted = timer.status === "completed";
+  const [renderCompletion, setRenderCompletion] = useState(isCompleted);
+  useEffect(() => {
+    if (isCompleted) setRenderCompletion(true);
+    else {
+      const t = setTimeout(() => setRenderCompletion(false), 1000);
+      return () => clearTimeout(t);
+    }
+  }, [isCompleted]);
 
+  const showTimer = !isRitualActive && !isCompleted;
+  const trayMode = ritualMode === "tray";
+  
   // Resolve category color for ring/glow
   const selectedCategory = categories.find(c => c.id === categoryId);
   const catColor = selectedCategory?.color || 'var(--accent)';
@@ -360,196 +387,256 @@ export function FocusTimerCard() {
   const pctRemaining = Math.min(1, Math.max(0, timer.remainingMs / totalDurationMs));
   const dashoffset = circumference - pctRemaining * circumference;
 
-  return (
-    <div className="flex h-full flex-col items-center justify-between pb-8 pt-4 relative">
-      {/* Orb background effect */}
-      <div 
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40 blur-[80px]"
-        style={{
-          width: 'min(100vw, 400px)',
-          height: 'min(100vw, 400px)',
-          background: timer.status === 'running' ? catGlow : 'transparent',
-          transition: 'background 1s ease'
-        }}
-      />
+  const showPause = timer.status === "running";
+  const showResume = timer.status === "paused";
+  const showStart = timer.status === "idle" || timer.status === "stopped" || timer.status === "completed";
 
-      {/* Top Section: Intention and Category */}
-      <div className="z-20 w-full mb-6 flex flex-col items-center shrink-0">
-        <CategorySelector 
-          categories={categories} 
-          selectedId={categoryId} 
-          onChange={setCategoryId} 
-        />
-        {timer.status === "idle" || timer.status === "stopped" || timer.status === "completed" ? (
-          <input
-            type="text"
-            value={intention}
-            onChange={(e) => setIntention(e.target.value)}
-            placeholder="What are you working on?"
-            className="mt-4 w-full max-w-[280px] rounded-lg border border-transparent bg-transparent px-4 py-2 text-xl font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--border-subtle)] focus:bg-[var(--bg-elevated)] transition-all text-center"
+  return (
+    <div className="relative w-full h-full">
+      {/* Breathing Ritual Layer */}
+      <div className={`absolute inset-0 transition-opacity duration-1000 ease-in-out z-30 ${isRitualActive ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+        {renderRitual && (
+          <BreathingRitualCard
+            durationMs={trayMode ? TRAY_MINI_RITUAL_DURATION_MS : ritualDurationMs}
+            compact={trayMode}
+            forceReducedMotion={trayMode}
+            onComplete={completeRitualAndStart}
+            onSkip={completeRitualAndStart}
           />
-        ) : (
-          <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 mt-4">
-            {intention && (
-              <span className="text-xl font-medium text-[var(--text-primary)]">
-                {intention}
-              </span>
-            )}
-            <span className="text-xs text-[var(--text-muted)] mt-1 hover:text-[var(--text-secondary)] cursor-pointer transition-colors">
-              Edit Session
-            </span>
-          </div>
         )}
       </div>
 
-      {/* Timer Circle Container */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full min-h-[300px]">
-        <div className="relative flex items-center justify-center w-[280px] h-[280px] mb-6">
-          <svg width="280" height="280" className="absolute top-0 left-0 -rotate-90">
-            {/* Background Ring */}
-            <circle
-              cx="140"
-              cy="140"
-              r={radius}
-              fill="transparent"
-              stroke="var(--bg-elevated)"
-              strokeWidth="12"
+      {/* Completion Layer */}
+      <div className={`absolute inset-0 transition-opacity duration-1000 ease-in-out z-20 ${isCompleted && !isRitualActive ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+        {renderCompletion && !isRitualActive && (
+          <CompletionState
+            mode={timer.mode}
+            onDismiss={() => {
+              setActiveCompletionKey(null);
+              setTimer((current) => stopTimer(current));
+            }}
+            onStartBreak={() => {
+              setActiveCompletionKey(`break-${Date.now()}`);
+              setTimer((current) => startTimer(current, Date.now(), "break"));
+            }}
+          />
+        )}
+      </div>
+
+      {/* Timer Layer */}
+      <div className={`absolute inset-0 transition-opacity duration-1000 ease-in-out z-10 ${showTimer ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+        <div className="flex h-full flex-col items-center justify-between pb-8 pt-4 relative">
+          {/* Orb background effect */}
+          <div 
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40 blur-[80px]"
+            style={{
+              width: 'min(100vw, 400px)',
+              height: 'min(100vw, 400px)',
+              background: timer.status === 'running' ? catGlow : 'transparent',
+              transition: 'background 1s ease'
+            }}
+          />
+
+          {/* Top Section: Intention and Category */}
+          <div className="z-20 w-full mb-6 flex flex-col items-center shrink-0">
+            <CategorySelector 
+              categories={categories} 
+              selectedId={categoryId} 
+              onChange={setCategoryId} 
             />
-            {/* Progress Ring */}
-            {timer.status !== "idle" && timer.status !== "stopped" && (
-              <circle
-                cx="140"
-                cy="140"
-                r={radius}
-                fill="transparent"
-                stroke={catColor}
-                strokeWidth="12"
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={dashoffset}
-                className="timer-ring-circle"
-                style={{ filter: `drop-shadow(0 0 8px ${catGlow})` }}
-              />
+            {timer.status === "idle" || timer.status === "stopped" ? (
+              <div className="flex flex-col items-center">
+                <input
+                  type="text"
+                  value={intention}
+                  onChange={(e) => setIntention(e.target.value)}
+                  placeholder="What are you working on?"
+                  className="mt-4 w-full max-w-[280px] rounded-lg border border-transparent bg-transparent px-4 py-2 text-xl font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--border-subtle)] focus:bg-[var(--bg-elevated)] transition-all text-center"
+                />
+                {todayFocusMs > 0 && (
+                  <span className="mt-2 text-xs font-medium text-[var(--text-secondary)] opacity-70">
+                    {Math.round(todayFocusMs / 60000)}m focused today
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 mt-4">
+                {intention && (
+                  <span className="text-xl font-medium text-[var(--text-primary)]">
+                    {intention}
+                  </span>
+                )}
+              </div>
             )}
-          </svg>
-
-          {/* Text perfectly centered inside the Timer Ring */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            {timer.status === "running" && (
-              <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)] mb-2 mt-[-10px]">
-                {timer.mode === "focus" ? "FOCUS" : "BREAK"}
-              </span>
-            )}
-            <h2 
-              className="text-6xl font-light tabular-nums tracking-tight text-[var(--text-primary)]"
-              style={{ textShadow: timer.status === 'running' ? `0 0 20px ${catGlow}` : 'none', transition: 'text-shadow 0.5s ease' }}
-            >
-              {formatClock(timer.remainingMs)}
-            </h2>
           </div>
-        </div>
 
-        {/* Bottom Control Buttons (Play, Pause, Stop) */}
-        <div className="flex items-center gap-6 mt-2">
-          {showStart ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (timer.mode === "focus") {
-                  startFocusSession();
-                  return;
-                }
-                setActiveCompletionKey(`break-${Date.now()}`);
-                setTimer((current) => startTimer(current, Date.now(), "break"));
-              }}
-              className="flex items-center justify-center w-16 h-16 rounded-full text-white transition-transform hover:scale-105 active:scale-95"
-              style={{ backgroundColor: catColor, boxShadow: `0 4px 20px ${catGlow}` }}
-              aria-label="Start Timer"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-1">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          {/* Timer Circle Container */}
+          <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full min-h-[300px]">
+            <div className="relative flex items-center justify-center w-[280px] h-[280px] mb-6 group">
+              <svg width="280" height="280" className="absolute top-0 left-0 -rotate-90">
+                {/* Background Ring */}
+                <circle
+                  cx="140"
+                  cy="140"
+                  r={radius}
+                  fill="transparent"
+                  stroke="var(--bg-elevated)"
+                  strokeWidth="12"
+                />
+                {/* Progress Ring */}
+                {timer.status !== "idle" && timer.status !== "stopped" && (
+                  <circle
+                    cx="140"
+                    cy="140"
+                    r={radius}
+                    fill="transparent"
+                    stroke={catColor}
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={dashoffset}
+                    className="timer-ring-circle"
+                    style={{ filter: `drop-shadow(0 0 8px ${catGlow})` }}
+                  />
+                )}
               </svg>
-            </button>
-          ) : null}
 
-          {showPause || showResume ? (
-            <>
-              {/* Placeholder / Secondary action (Volume etc) */}
-              <button className="flex items-center justify-center w-12 h-12 rounded-full bg-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-elevated)] transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                </svg>
-              </button>
+              {/* Text perfectly centered inside the Timer Ring */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                {timer.status !== "completed" && (
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)] mb-2 mt-[-10px] opacity-70">
+                    {timer.mode === "focus" ? "FOCUS" : "BREAK"}
+                  </span>
+                )}
+                <h2 
+                  className="text-6xl font-light tabular-nums tracking-tight text-[var(--text-primary)]"
+                  style={{ textShadow: timer.status === 'running' ? `0 0 20px ${catGlow}` : 'none', transition: 'text-shadow 0.5s ease' }}
+                >
+                  {formatClock(timer.remainingMs)}
+                </h2>
+                
+                {/* Adjust Time Buttons */}
+                {timer.status !== "completed" && timer.status !== "stopped" && (
+                  <div className="flex gap-4 mt-4 transition-opacity duration-300 opacity-0 hover:opacity-100 group-hover:opacity-100 absolute bottom-12">
+                    <button
+                      type="button"
+                      onClick={() => setTimer(c => adjustTime(c, -5 * 60 * 1000, Date.now()))}
+                      className="rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-surface)] transition-colors border border-[var(--border-subtle)] shadow-sm"
+                      aria-label="Subtract 5 minutes"
+                    >
+                      -5m
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTimer(c => adjustTime(c, 5 * 60 * 1000, Date.now()))}
+                      className="rounded-full bg-[var(--bg-elevated)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-surface)] transition-colors border border-[var(--border-subtle)] shadow-sm"
+                      aria-label="Add 5 minutes"
+                    >
+                      +5m
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
 
-              <button
-                type="button"
-                onClick={() => setTimer((current) => showPause ? pauseTimer(current, Date.now()) : resumeTimer(current, Date.now()))}
-                className="flex items-center justify-center w-16 h-16 rounded-full bg-[var(--bg-elevated)] text-[var(--accent)] hover:bg-[var(--bg-surface)] transition-transform hover:scale-105 active:scale-95 border border-[var(--border-subtle)]"
-              >
-                {showPause ? (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                    <rect x="6" y="4" width="4" height="16"></rect>
-                    <rect x="14" y="4" width="4" height="16"></rect>
-                  </svg>
-                ) : (
+            {/* Bottom Control Buttons (Play, Pause, Stop) */}
+            <div className="flex items-center gap-6 mt-2">
+              {showStart ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (timer.mode === "focus") {
+                      startFocusSession();
+                      return;
+                    }
+                    setActiveCompletionKey(`break-${Date.now()}`);
+                    setTimer((current) => startTimer(current, Date.now(), "break"));
+                  }}
+                  className="flex items-center justify-center w-16 h-16 rounded-full text-white transition-transform hover:scale-105 active:scale-95"
+                  style={{ backgroundColor: catColor, boxShadow: `0 4px 20px ${catGlow}` }}
+                  aria-label="Start Timer"
+                >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-1">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                   </svg>
-                )}
-              </button>
+                </button>
+              ) : null}
 
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveCompletionKey(null);
-                  setTimer((current) => stopTimer(current));
-                }}
-                className="flex items-center justify-center w-12 h-12 rounded-full bg-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-elevated)] transition-transform hover:scale-105 active:scale-95"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                  <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-                </svg>
-              </button>
-            </>
+              {showPause || showResume ? (
+                <>
+
+                  <button
+                    type="button"
+                    onClick={() => setTimer((current) => showPause ? pauseTimer(current, Date.now()) : resumeTimer(current, Date.now()))}
+                    className="flex items-center justify-center w-16 h-16 rounded-full bg-[var(--bg-elevated)] text-[var(--accent)] hover:bg-[var(--bg-surface)] transition-transform hover:scale-105 active:scale-95 border border-[var(--border-subtle)]"
+                    aria-label={showPause ? "Pause Timer" : "Resume Timer"}
+                  >
+                    {showPause ? (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                      </svg>
+                    ) : (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-1">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveCompletionKey(null);
+                      setTimer((current) => stopTimer(current));
+                    }}
+                    className="flex items-center justify-center w-12 h-12 rounded-full bg-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-elevated)] transition-transform hover:scale-105 active:scale-95"
+                    aria-label="Stop Timer"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                      <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                    </svg>
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Recovery / Error Messages */}
+          {pendingRecovery ? (
+            <div className="glass-panel absolute z-50 bottom-8 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg max-w-[320px] text-center">
+              <p className="mb-2 text-white">Session interrupted.</p>
+              <div className="flex gap-2 justify-center">
+                <button
+                  type="button"
+                  onClick={resumeFromCheckpoint}
+                  className="rounded-full bg-[var(--bg-elevated)] px-4 py-1.5 text-xs font-medium text-white hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)]"
+                >
+                  Resume
+                </button>
+                <button
+                  type="button"
+                  onClick={dismissRecovery}
+                  className="rounded-full px-4 py-1.5 text-xs font-medium hover:bg-[var(--bg-elevated)] border border-transparent"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {timer.lastError ? (
+            <p className="glass-panel absolute z-50 bottom-8 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg">
+              {timer.lastError}
+            </p>
+          ) : null}
+          
+          {notificationWarning ? (
+            <p className="glass-panel absolute z-50 bottom-8 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg max-w-[320px] text-center">
+              {notificationWarning}
+            </p>
           ) : null}
         </div>
       </div>
-
-      {/* Recovery / Error Messages */}
-      {pendingRecovery ? (
-        <div className="glass-panel absolute z-50 bottom-8 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg max-w-[320px] text-center">
-          <p className="mb-2 text-white">Session interrupted.</p>
-          <div className="flex gap-2 justify-center">
-            <button
-              type="button"
-              onClick={resumeFromCheckpoint}
-              className="rounded-full bg-[var(--bg-elevated)] px-4 py-1.5 text-xs font-medium text-white hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)]"
-            >
-              Resume
-            </button>
-            <button
-              type="button"
-              onClick={dismissRecovery}
-              className="rounded-full px-4 py-1.5 text-xs font-medium hover:bg-[var(--bg-elevated)] border border-transparent"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      {timer.lastError ? (
-        <p className="glass-panel absolute z-50 bottom-8 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg">
-          {timer.lastError}
-        </p>
-      ) : null}
-      
-      {notificationWarning ? (
-        <p className="glass-panel absolute z-50 bottom-8 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg max-w-[320px] text-center">
-          {notificationWarning}
-        </p>
-      ) : null}
     </div>
   );
 }

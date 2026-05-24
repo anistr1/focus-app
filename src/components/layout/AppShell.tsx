@@ -118,11 +118,19 @@ export function AppShell() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6 pt-10">
-          {activeTab === "timer" && <FocusTimerCard />}
-          {activeTab === "sessions" && <SessionHistoryCard />}
-          {activeTab === "analytics" && <AnalyticsCard />}
-          {activeTab === "settings" && <SettingsCard />}
+        <div className="flex-1 relative overflow-hidden">
+          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-10 transition-all duration-500 ease-out ${activeTab === "timer" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-1 pointer-events-none z-0"}`}>
+            <FocusTimerCard />
+          </div>
+          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-10 transition-all duration-500 ease-out ${activeTab === "sessions" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-1 pointer-events-none z-0"}`}>
+            <SessionHistoryCard />
+          </div>
+          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-10 transition-all duration-500 ease-out ${activeTab === "analytics" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-1 pointer-events-none z-0"}`}>
+            <AnalyticsCard />
+          </div>
+          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-10 transition-all duration-500 ease-out ${activeTab === "settings" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-1 pointer-events-none z-0"}`}>
+            <SettingsCard />
+          </div>
         </div>
       </div>
     </main>

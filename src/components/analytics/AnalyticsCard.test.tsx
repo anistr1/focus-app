@@ -31,10 +31,10 @@ describe("AnalyticsCard", () => {
     );
 
     render(<AnalyticsCard />);
-    expect(screen.getByRole("heading", { name: /calm analytics/i })).toBeInTheDocument();
-    expect(screen.getByText(/today/i)).toBeInTheDocument();
-    expect(screen.getByText(/^streak$/i)).toBeInTheDocument();
-    expect(screen.getByText(/weekly rhythm/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^analytics$/i })).toBeInTheDocument();
+    expect(screen.getByText(/Total Time/i)).toBeInTheDocument();
+    expect(screen.getByText(/Current Streak/i)).toBeInTheDocument();
+    expect(screen.getByText(/Trend/i)).toBeInTheDocument();
   });
 
   it("disables chart transitions when reduced motion is preferred", () => {

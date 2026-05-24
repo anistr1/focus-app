@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -21,10 +21,15 @@ export function ConfirmModal({
   onCancel,
   isDestructive = false
 }: ConfirmModalProps) {
-  // Prevent scrolling on body when modal is open
+  const modalRef = useRef<HTMLDivElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+
+  // Prevent scrolling on body when modal is open and handle focus
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      // Slight delay to ensure DOM is ready
+      setTimeout(() => confirmRef.current?.focus(), 10);
     } else {
       document.body.style.overflow = '';
     }
@@ -32,6 +37,41 @@ export function ConfirmModal({
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCancel();
+        return;
+      }
+
+      if (e.key === "Tab") {
+        if (!modalRef.current) return;
+        const focusableElements = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onCancel]);
 
   if (!isOpen) return null;
 
@@ -46,7 +86,8 @@ export function ConfirmModal({
       {/* Modal */}
       <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
         <div 
-          className="glass-panel relative flex flex-col w-full max-w-sm rounded-2xl overflow-hidden pointer-events-auto shadow-2xl animate-in zoom-in-95 duration-200"
+          ref={modalRef}
+          className="glass-panel relative flex flex-col w-full max-w-sm rounded-2xl overflow-hidden pointer-events-auto shadow-xl animate-in zoom-in-95 duration-200"
           role="dialog"
           aria-modal="true"
         >
@@ -69,6 +110,7 @@ export function ConfirmModal({
               {cancelText}
             </button>
             <button
+              ref={confirmRef}
               onClick={() => {
                 onConfirm();
               }}

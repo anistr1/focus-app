@@ -108,7 +108,8 @@ export function stopTimer(state: TimerState): TimerState {
   return {
     ...state,
     status: "stopped",
-    targetTimeMs: null
+    targetTimeMs: null,
+    remainingMs: getDurationByMode(state)
   };
 }
 
@@ -146,6 +147,50 @@ export function applyTrayAction(state: TimerState, action: TrayAction, nowMs: nu
   }
   if (action === "quick-break") {
     return startTimer(setMode(state, "break"), nowMs, "break");
+  }
+  return state;
+}
+
+export function adjustTime(state: TimerState, deltaMs: number, nowMs: number): TimerState {
+  if (state.status === "completed" || state.status === "stopped" || state.status === "error") {
+    return state;
+  }
+  
+  const isFocus = state.mode === "focus";
+  const newFocusDuration = isFocus ? Math.max(0, state.focusDurationMs + deltaMs) : state.focusDurationMs;
+  const newBreakDuration = !isFocus ? Math.max(0, state.breakDurationMs + deltaMs) : state.breakDurationMs;
+
+  if (state.status === "idle" || state.status === "paused") {
+    const newRemaining = Math.max(0, state.remainingMs + deltaMs);
+    return { 
+      ...state, 
+      remainingMs: newRemaining,
+      focusDurationMs: newFocusDuration,
+      breakDurationMs: newBreakDuration
+    };
+  }
+
+  if (state.status === "running" && state.targetTimeMs !== null) {
+    const newTarget = state.targetTimeMs + deltaMs;
+    const newRemaining = Math.max(0, newTarget - nowMs);
+    
+    if (newRemaining <= 0) {
+       return {
+         ...state,
+         status: "completed",
+         remainingMs: 0,
+         targetTimeMs: null,
+         focusDurationMs: newFocusDuration,
+         breakDurationMs: newBreakDuration
+       };
+    }
+    return {
+      ...state,
+      targetTimeMs: newTarget,
+      remainingMs: newRemaining,
+      focusDurationMs: newFocusDuration,
+      breakDurationMs: newBreakDuration
+    };
   }
   return state;
 }

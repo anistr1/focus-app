@@ -36,7 +36,12 @@ export type TelemetryExportSummary = {
 export function buildTelemetryExport(nowMs: number = Date.now()): TelemetryExportSummary {
   const sessions = readSessionHistory();
   const settings = readSettings();
-  const analytics = buildAnalyticsSummary(sessions, nowMs);
+  
+  const allTime = buildAnalyticsSummary(sessions, "all-time", nowMs);
+  const today = buildAnalyticsSummary(sessions, "today", nowMs);
+  const month = buildAnalyticsSummary(sessions, "30-days", nowMs);
+  const week = buildAnalyticsSummary(sessions, "7-days", nowMs);
+
   const totalFocusMinutes = Math.round(
     sessions.filter((session) => session.completed).reduce((sum, session) => sum + session.durationMs, 0) / 60000
   );
@@ -46,21 +51,21 @@ export function buildTelemetryExport(nowMs: number = Date.now()): TelemetryExpor
     generatedAtIso: new Date(nowMs).toISOString(),
     telemetryEnabled: settings.telemetryOptIn,
     sessionMetrics: {
-      completedSessions: analytics.totalCompletedSessions,
+      completedSessions: allTime.periodSessions,
       totalFocusMinutes,
       averageSessionMinutes:
-        analytics.totalCompletedSessions === 0
+        allTime.periodSessions === 0
           ? 0
-          : Math.round(totalFocusMinutes / analytics.totalCompletedSessions)
+          : Math.round(totalFocusMinutes / allTime.periodSessions)
     },
     streakMetrics: {
-      currentDays: analytics.currentStreakDays,
-      longestDays: analytics.longestStreakDays
+      currentDays: allTime.currentStreakDays,
+      longestDays: allTime.longestStreakDays
     },
     trendMetrics: {
-      todayMinutes: Math.round(analytics.todayTotalMs / 60000),
-      monthMinutes: Math.round(analytics.monthTotalMs / 60000),
-      weeklyMinutes: analytics.weeklyTrend.map((item) => item.minutes)
+      todayMinutes: Math.round(today.periodTotalMs / 60000),
+      monthMinutes: Math.round(month.periodTotalMs / 60000),
+      weeklyMinutes: week.trend.map((item) => item.minutes)
     },
     preferenceMetrics: {
       focusDurationMinutes: settings.focusDurationMinutes,

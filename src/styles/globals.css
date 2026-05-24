@@ -7,21 +7,21 @@
     sans-serif;
   
   /* Session-faithful color palette */
-  --accent: hsl(4 72% 48%);
-  --accent-bright: hsl(4 80% 58%);
-  --accent-soft: hsla(4, 72%, 48%, 0.15);
-  --accent-glow: hsla(4, 70%, 40%, 0.5);
+  --accent: hsl(196 80% 58%);
+  --accent-bright: hsl(196 90% 68%);
+  --accent-soft: hsl(196 60% 20%);
+  --accent-glow: hsla(196, 70%, 40%, 0.5);
 
-  --bg-base: hsl(0 0% 7%);
-  --bg-surface: hsl(0 0% 10%);
-  --bg-elevated: hsl(0 0% 13%);
-  --bg-glass: hsla(0, 0%, 14%, 0.6);
+  --bg-base: hsl(222 14% 8%);
+  --bg-surface: hsl(222 12% 12%);
+  --bg-elevated: hsl(222 10% 16%);
+  --bg-glass: hsla(222, 10%, 14%, 0.6);
 
   --text-primary: hsl(0 0% 94%);
-  --text-secondary: hsl(0 0% 48%);
-  --text-muted: hsl(0 0% 30%);
+  --text-secondary: hsl(222 8% 56%);
+  --text-muted: hsl(222 8% 40%);
 
-  --border-subtle: hsla(0, 0%, 100%, 0.06);
+  --border-subtle: hsl(222 12% 20%);
   --ring-track: hsla(0, 0%, 100%, 0.08);
 
   --gradient-breath-start: hsla(15, 60%, 40%, 0.4);
@@ -45,23 +45,39 @@ body,
 
 #root {
   transition: background-color 1.5s ease, background 1.5s ease;
+  background-size: 200% 200%;
 }
 
 /* Mood States applied to #root */
 #root.mood-idle {
-  background: var(--bg-base);
+  background: radial-gradient(circle at 50% 60%, hsla(222, 15%, 10%, 0.3), var(--bg-base) 80%);
+  background-size: 200% 200%;
+  animation: mood-drift 60s ease-in-out infinite alternate;
 }
 #root.mood-running {
   background: radial-gradient(circle at 50% 20%, hsla(240, 20%, 15%, 0.4), var(--bg-base) 70%);
+  background-size: 200% 200%;
+  animation: mood-drift 30s ease-in-out infinite alternate;
 }
 #root.mood-break {
   background: radial-gradient(circle at 50% 20%, hsla(160, 20%, 15%, 0.3), var(--bg-base) 70%);
+  background-size: 200% 200%;
+  animation: mood-drift 30s ease-in-out infinite alternate;
 }
 #root.mood-completed {
   background: radial-gradient(circle at 50% 20%, hsla(270, 20%, 15%, 0.4), var(--bg-base) 70%);
 }
 #root.mood-breathing {
   background: radial-gradient(circle at 50% 50%, hsla(15, 30%, 15%, 0.6), var(--bg-base) 80%);
+}
+
+@keyframes mood-drift {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
 }
 
 .onboarding-screen {
@@ -90,14 +106,14 @@ body,
 }
 
 .breathing-circle.phase-inhale {
-  transform: scale(1.3);
+  transform: scale(1.5);
   opacity: 1;
   background-color: hsla(15, 80%, 50%, 0.5); /* vibrant warm */
   box-shadow: 0 0 60px hsla(15, 80%, 50%, 0.4);
 }
 
 .breathing-circle.phase-hold {
-  transform: scale(1.3);
+  transform: scale(1.5);
   opacity: 0.95;
   background-color: hsla(30, 80%, 50%, 0.5); /* amber transition */
   box-shadow: 0 0 40px hsla(30, 80%, 50%, 0.3);
@@ -132,7 +148,7 @@ body,
     opacity: 0.82;
   }
   50% {
-    transform: scale(1.3);
+    transform: scale(1.5);
     opacity: 1;
   }
 }
@@ -170,6 +186,14 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button {
+  transition: transform 160ms ease-in-out, background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+button:active {
+  transform: scale(0.97);
 }
 
 :focus-visible {

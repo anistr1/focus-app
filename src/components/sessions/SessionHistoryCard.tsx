@@ -90,13 +90,9 @@ export function SessionHistoryCard() {
             return (
               <li
                 key={entry.id}
-                className="relative pl-6 before:absolute before:left-2 before:top-3 before:h-2 before:w-2 before:rounded-full after:absolute after:left-[11px] after:top-7 after:-bottom-5 after:w-[1px] after:bg-[var(--border-subtle)] last:after:hidden"
+                className="relative pl-6 after:absolute after:left-[11px] after:top-7 after:-bottom-5 after:w-[1px] after:bg-[var(--border-subtle)] last:after:hidden"
               >
-                <style>{`
-                  li:nth-child(${recent.indexOf(entry) + 1})::before {
-                    background-color: ${dotColor};
-                  }
-                `}</style>
+                <span className="absolute left-2 top-3 h-2 w-2 rounded-full" style={{ backgroundColor: dotColor }} />
                 <div className="glass-panel rounded-xl px-4 py-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-[var(--text-primary)]">

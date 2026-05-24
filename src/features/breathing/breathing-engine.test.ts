@@ -11,7 +11,8 @@ describe("breathing ritual engine", () => {
   it("cycles through inhale, hold, and exhale in order", () => {
     const ritual = createBreathingRitual(30_000);
     expect(getCurrentPhase(ritual, 0).name).toBe("inhale");
-    expect(getCurrentPhase(ritual, 2_500).name).toBe("hold");
-    expect(getCurrentPhase(ritual, 4_500).name).toBe("exhale");
+    expect(getCurrentPhase(ritual, 4_500).name).toBe("hold");
+    expect(getCurrentPhase(ritual, 8_500).name).toBe("exhale");
+    expect(getCurrentPhase(ritual, 12_500).name).toBe("hold-out");
   });
 });

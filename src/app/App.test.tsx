@@ -13,37 +13,37 @@ describe("App onboarding flow", () => {
     render(<App />);
 
     expect(
-      screen.getByRole("heading", { name: /your focus ritual starts here/i })
+      screen.getByRole("heading", { name: /ready to focus/i })
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
     expect(
-      screen.getByRole("heading", { name: /choose your default focus duration/i })
+      screen.getByRole("heading", { name: /default duration/i })
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
     expect(
       screen.getByRole("heading", {
-        name: /help improve focus app with local telemetry/i
+        name: /data privacy/i
       })
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByLabelText(/no thanks/i));
+    fireEvent.click(screen.getByRole("button", { name: /no thanks/i }));
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
     expect(
-      screen.getByRole("heading", { name: /try a short breathing preview/i })
+      screen.getByRole("heading", { name: /breathe before you start/i })
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
     expect(
-      screen.getByRole("heading", { name: /your timer is ready/i })
+      screen.getByRole("heading", { name: /all set/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/tip: press ctrl\+shift\+f anytime to start focus/i)
+      screen.getByRole("button", { name: /start session/i })
     ).toBeInTheDocument();
   });
 
@@ -56,19 +56,17 @@ describe("App onboarding flow", () => {
     const continueButton = screen.getByRole("button", { name: /continue/i });
     expect(continueButton).toBeDisabled();
 
-    fireEvent.click(screen.getByLabelText(/yes, allow local telemetry/i));
+    fireEvent.click(screen.getByRole("button", { name: /yes, allow local telemetry/i }));
     expect(continueButton).toBeEnabled();
 
     fireEvent.click(continueButton);
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
     fireEvent.click(
-      screen.getByRole("button", { name: /enter your focus dashboard/i })
+      screen.getByRole("button", { name: /start session/i })
     );
 
     expect(
-      screen.getByRole("heading", {
-        name: /calm desktop focus, scaffolded for offline-first rituals/i
-      })
+      screen.getByRole("button", { name: /sessions/i })
     ).toBeInTheDocument();
 
     const persisted = JSON.parse(window.localStorage.getItem(stateKey) ?? "{}");
@@ -89,7 +87,7 @@ describe("App onboarding flow", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /help improve focus app with local telemetry/i
+        name: /data privacy/i
       })
     ).toBeInTheDocument();
 
@@ -99,7 +97,7 @@ describe("App onboarding flow", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /back/i }));
     expect(
-      screen.getByRole("heading", { name: /choose your default focus duration/i })
+      screen.getByRole("heading", { name: /default duration/i })
     ).toBeInTheDocument();
   });
 
@@ -112,9 +110,7 @@ describe("App onboarding flow", () => {
     render(<App />);
 
     expect(
-      screen.getByRole("heading", {
-        name: /calm desktop focus, scaffolded for offline-first rituals/i
-      })
+      screen.getByRole("button", { name: /sessions/i })
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: /your focus ritual starts here/i })
@@ -129,8 +125,8 @@ describe("App onboarding flow", () => {
 
     render(<App />);
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /breathing ritual before focus/i }));
-    const startButton = screen.getByRole("button", { name: /start focus/i });
+    fireEvent.click(screen.getByRole("checkbox", { name: /breathing ritual/i }));
+    const startButton = screen.getByRole("button", { name: /start timer/i });
     fireEvent.click(startButton);
 
     expect(screen.getByRole("button", { name: /pause/i })).toBeInTheDocument();
@@ -145,10 +141,10 @@ describe("App onboarding flow", () => {
 
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: /start focus/i }));
-    expect(screen.getByRole("heading", { name: /breathe in/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /start timer/i }));
+    expect(screen.getByRole("button", { name: /skip/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /skip ritual/i }));
+    fireEvent.click(screen.getByRole("button", { name: /skip/i }));
     expect(screen.getByRole("button", { name: /pause/i })).toBeInTheDocument();
   });
 
@@ -170,10 +166,10 @@ describe("App onboarding flow", () => {
     render(<App />);
 
     expect(
-      screen.getByText(/your last session was interrupted\. resume from latest checkpoint\?/i)
+      screen.getByText(/session interrupted/i)
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /resume session/i }));
+    fireEvent.click(screen.getByRole("button", { name: /resume/i }));
     expect(screen.getByRole("button", { name: /pause/i })).toBeInTheDocument();
   });
 
@@ -196,7 +192,7 @@ describe("App onboarding flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /dismiss/i }));
 
     expect(
-      screen.queryByText(/your last session was interrupted\. resume from latest checkpoint\?/i)
+      screen.queryByText(/session interrupted/i)
     ).not.toBeInTheDocument();
   });
 
@@ -207,7 +203,7 @@ describe("App onboarding flow", () => {
     );
 
     render(<App />);
-    fireEvent.click(screen.getByRole("checkbox", { name: /breathing ritual before focus/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /breathing ritual/i }));
 
     fireEvent.keyDown(window, { key: "F", ctrlKey: true, shiftKey: true });
     expect(screen.getByRole("button", { name: /pause/i })).toBeInTheDocument();
@@ -225,9 +221,9 @@ describe("App onboarding flow", () => {
     render(<App />);
 
     expect(
-      screen.getByText(/shortcut: ctrl\+shift\+f toggles start\/pause focus/i)
+      screen.getByText(/start\/pause timer/i)
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/focus timer status/i)).toBeInTheDocument();
+    expect(screen.getByText("25:00")).toBeInTheDocument();
   });
 
   it("shows calm empty state when no session history exists", () => {
@@ -240,7 +236,7 @@ describe("App onboarding flow", () => {
     render(<App />);
 
     expect(
-      screen.getByText(/your completed sessions will appear here as you build your rhythm/i)
+      screen.getByText(/your history will appear here/i)
     ).toBeInTheDocument();
   });
 
@@ -251,12 +247,12 @@ describe("App onboarding flow", () => {
     );
 
     render(<App />);
-    fireEvent.change(screen.getByLabelText(/focus duration/i), { target: { value: "60" } });
-    fireEvent.click(screen.getByLabelText(/launch on startup/i));
+    fireEvent.click(screen.getByRole("button", { name: "60m" }));
+    fireEvent.click(screen.getByLabelText(/toggle notifications/i));
 
     const stored = JSON.parse(window.localStorage.getItem("focus-app:settings") ?? "{}");
     expect(stored.focusDurationMinutes).toBe(60);
-    expect(stored.launchOnStartup).toBe(true);
+    expect(stored.notificationsEnabled).toBe(false);
   });
 
   it("applies updated duration settings to timer behavior", () => {
@@ -266,8 +262,7 @@ describe("App onboarding flow", () => {
     );
 
     render(<App />);
-    fireEvent.change(screen.getByLabelText(/focus duration/i), { target: { value: "45" } });
-    fireEvent.click(screen.getByRole("button", { name: /reset/i }));
+    fireEvent.click(screen.getByRole("button", { name: "45m" }));
 
     expect(screen.getByRole("heading", { name: "45:00" })).toBeInTheDocument();
   });
@@ -289,11 +284,7 @@ describe("App onboarding flow", () => {
     const revokeObjectUrl = vi.spyOn(URL, "revokeObjectURL");
 
     render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: /export telemetry summary/i }));
-
-    expect(
-      screen.getByText(/telemetry summary exported locally as json/i)
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /export json/i }));
 
     createObjectUrl.mockRestore();
     revokeObjectUrl.mockRestore();

@@ -79,10 +79,10 @@ export function SettingsCard() {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Settings</h2>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-12">
         
         {/* Categories Section */}
-        <section>
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '100ms' }}>
           <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-3 px-1">Categories</h3>
           <div className="glass-panel rounded-2xl p-4 space-y-4">
             <p className="text-xs text-[var(--text-muted)] mb-2">
@@ -161,7 +161,7 @@ export function SettingsCard() {
         </section>
 
         {/* Timer Section */}
-        <section>
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '200ms' }}>
           <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-3 px-1">Timer</h3>
           <div className="glass-panel rounded-2xl overflow-hidden p-4 space-y-6">
             
@@ -207,7 +207,7 @@ export function SettingsCard() {
         </section>
 
         {/* Behavior Section */}
-        <section>
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '300ms' }}>
           <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-3 px-1">Behavior</h3>
           <div className="glass-panel rounded-2xl overflow-hidden">
             
@@ -294,8 +294,41 @@ export function SettingsCard() {
           </div>
         </section>
 
+        {/* Shortcuts Section */}
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '400ms' }}>
+          <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-3 px-1">Shortcuts</h3>
+          <div className="glass-panel rounded-2xl overflow-hidden p-4">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between py-2 border-b border-[var(--border-subtle)]">
+                <span className="text-sm text-[var(--text-primary)]">Start/Pause Timer</span>
+                <div className="flex gap-1">
+                  <kbd className="rounded bg-[var(--bg-elevated)] px-2 py-1 text-xs font-mono text-[var(--text-secondary)]">Ctrl</kbd>
+                  <kbd className="rounded bg-[var(--bg-elevated)] px-2 py-1 text-xs font-mono text-[var(--text-secondary)]">Shift</kbd>
+                  <kbd className="rounded bg-[var(--bg-elevated)] px-2 py-1 text-xs font-mono text-[var(--text-secondary)]">F</kbd>
+                </div>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-[var(--border-subtle)]">
+                <span className="text-sm text-[var(--text-primary)]">Stop Timer</span>
+                <div className="flex gap-1">
+                  <kbd className="rounded bg-[var(--bg-elevated)] px-2 py-1 text-xs font-mono text-[var(--text-secondary)]">Ctrl</kbd>
+                  <kbd className="rounded bg-[var(--bg-elevated)] px-2 py-1 text-xs font-mono text-[var(--text-secondary)]">Shift</kbd>
+                  <kbd className="rounded bg-[var(--bg-elevated)] px-2 py-1 text-xs font-mono text-[var(--text-secondary)]">S</kbd>
+                </div>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-[var(--text-primary)]">Skip Breathing Ritual</span>
+                <div className="flex gap-1">
+                  <kbd className="rounded bg-[var(--bg-elevated)] px-2 py-1 text-xs font-mono text-[var(--text-secondary)]">Esc</kbd>
+                  <span className="text-xs text-[var(--text-muted)] self-center px-1">or</span>
+                  <kbd className="rounded bg-[var(--bg-elevated)] px-2 py-1 text-xs font-mono text-[var(--text-secondary)]">Space</kbd>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Data Section */}
-        <section>
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '500ms' }}>
           <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-3 px-1">Data</h3>
           <div className="glass-panel rounded-2xl overflow-hidden p-4">
             <p className="text-sm text-[var(--text-primary)] mb-2">Export Data</p>

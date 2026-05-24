@@ -29,23 +29,24 @@ describe("buildAnalyticsSummary", () => {
       record("d", 35, 0)
     ];
 
-    const summary = buildAnalyticsSummary(sessions, atUtcDay(0));
+    const summaryToday = buildAnalyticsSummary(sessions, "today", atUtcDay(0));
+    expect(summaryToday.currentStreakDays).toBe(3);
+    expect(summaryToday.longestStreakDays).toBe(3);
+    expect(summaryToday.periodSessions).toBe(2);
+    expect(summaryToday.periodTotalMs).toBe(50 * 60 * 1000);
 
-    expect(summary.currentStreakDays).toBe(3);
-    expect(summary.longestStreakDays).toBe(3);
-    expect(summary.totalCompletedSessions).toBe(4);
-    expect(summary.monthTotalMs).toBe(105 * 60 * 1000);
-    expect(summary.todayTotalMs).toBe(50 * 60 * 1000);
-    expect(summary.weeklyTrend).toHaveLength(7);
-    expect(summary.weeklyTrend.at(-1)?.minutes).toBe(50);
+    const summaryWeek = buildAnalyticsSummary(sessions, "7-days", atUtcDay(0));
+    expect(summaryWeek.periodSessions).toBe(4);
+    expect(summaryWeek.periodTotalMs).toBe(105 * 60 * 1000);
+    expect(summaryWeek.trend).toHaveLength(7);
+    expect(summaryWeek.trend.at(-1)?.minutes).toBe(50);
   });
 
   it("returns calm defaults for empty history", () => {
-    const summary = buildAnalyticsSummary([], atUtcDay(0));
+    const summary = buildAnalyticsSummary([], "7-days", atUtcDay(0));
     expect(summary.currentStreakDays).toBe(0);
     expect(summary.longestStreakDays).toBe(0);
-    expect(summary.todayTotalMs).toBe(0);
-    expect(summary.monthTotalMs).toBe(0);
-    expect(summary.weeklyTrend).toHaveLength(7);
+    expect(summary.periodTotalMs).toBe(0);
+    expect(summary.trend).toHaveLength(7);
   });
 });
