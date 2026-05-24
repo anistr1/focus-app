@@ -26,7 +26,8 @@ describe("settings-state", () => {
       animationIntensity: "minimal",
       telemetryOptIn: true,
       launchOnStartup: true,
-      minimizeToTrayOnClose: true
+      minimizeToTrayOnClose: true,
+      autoStartBreak: false
     });
 
     const raw = window.localStorage.getItem(SETTINGS_KEY);

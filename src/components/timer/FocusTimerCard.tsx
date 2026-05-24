@@ -42,7 +42,12 @@ function formatClock(totalMs: number): string {
   return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
 
-export function FocusTimerCard() {
+type FocusTimerCardProps = {
+  isMiniWidget?: boolean;
+  onExpand?: () => void;
+};
+
+export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCardProps) {
   const TRAY_MINI_RITUAL_DURATION_MS = 15_000;
   const initialSettings = readSettings();
   const [timer, setTimer] = useState<TimerState>(() =>
@@ -58,6 +63,7 @@ export function FocusTimerCard() {
 
   const [ritualEnabled, setRitualEnabled] = useState(initialSettings.breathingEnabled);
   const [notificationsEnabled, setNotificationsEnabled] = useState(initialSettings.notificationsEnabled);
+  const [autoStartBreak, setAutoStartBreak] = useState(initialSettings.autoStartBreak);
   const [ritualDurationMs, setRitualDurationMs] = useState(initialSettings.breathingDurationSeconds * 1000);
   const [isRitualActive, setIsRitualActive] = useState(false);
   const [ritualMode, setRitualMode] = useState<"full" | "tray">("full");
@@ -94,6 +100,7 @@ export function FocusTimerCard() {
       const settings = readSettings();
       setRitualEnabled(settings.breathingEnabled);
       setNotificationsEnabled(settings.notificationsEnabled);
+      setAutoStartBreak(settings.autoStartBreak);
       setRitualDurationMs(settings.breathingDurationSeconds * 1000);
       setTimer((current) => {
         const focusDurationMs = settings.focusDurationMinutes * 60 * 1000;
@@ -282,6 +289,12 @@ export function FocusTimerCard() {
       );
       setActiveCompletionKey(null);
 
+      // Auto-start break logic
+      if (timer.mode === "focus" && autoStartBreak) {
+        setActiveCompletionKey(`break-${Date.now()}`);
+        setTimer((current) => startTimer(current, Date.now(), "break"));
+      }
+
       if (notificationsEnabled) {
         const completionEvent = timer.mode === "focus" ? "focus-complete" : "break-complete";
         const completionMessage = messageForEvent(completionEvent);
@@ -399,7 +412,7 @@ export function FocusTimerCard() {
   // Resolve category color for ring/glow
   const selectedCategory = categories.find(c => c.id === categoryId);
   const catColor = selectedCategory?.color || 'var(--accent)';
-  const catGlow = selectedCategory?.color ? `${selectedCategory.color}66` : 'var(--accent-glow)'; // 40% opacity hex suffix
+  const catGlow = selectedCategory?.color ? selectedCategory.color : 'var(--accent)';
 
   // SVG Ring calculations
   const totalDurationMs = timer.mode === "focus" ? timer.focusDurationMs : timer.breakDurationMs;
@@ -412,6 +425,61 @@ export function FocusTimerCard() {
   const showPause = timer.status === "running";
   const showResume = timer.status === "paused";
   const showStart = timer.status === "idle" || timer.status === "stopped" || timer.status === "completed";
+
+  if (isMiniWidget) {
+    const miniRadius = 100;
+    const miniCircumference = 2 * Math.PI * miniRadius;
+    const miniDashoffset = miniCircumference - pctRemaining * miniCircumference;
+
+    return (
+      <div data-tauri-drag-region className="fixed inset-0 w-full h-full flex flex-col items-center justify-center bg-[var(--bg-base)] overflow-hidden cursor-move rounded-xl border border-[var(--border-subtle)]">
+        {/* Glow Background */}
+        <div 
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-[40px]"
+          style={{ width: 180, height: 180, background: timer.status === 'running' ? catGlow : 'transparent', transition: 'background 1s ease' }}
+        />
+        
+        {/* Compact Timer Ring */}
+        <div className="relative flex items-center justify-center pointer-events-none w-[220px] h-[220px] mb-4">
+          <svg width="220" height="220" className="absolute top-0 left-0 -rotate-90">
+            <circle cx="110" cy="110" r={miniRadius} fill="transparent" stroke="var(--bg-elevated)" strokeWidth="6" />
+            {timer.status !== "idle" && timer.status !== "stopped" && (
+              <circle cx="110" cy="110" r={miniRadius} fill="transparent" stroke={catColor} strokeWidth="6" strokeLinecap="round" strokeDasharray={miniCircumference} strokeDashoffset={miniDashoffset} style={{ filter: `drop-shadow(0 0 6px ${catGlow})` }} />
+            )}
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <h2 className="text-4xl font-light tabular-nums tracking-tight text-[var(--text-primary)]" style={{ textShadow: timer.status === 'running' ? `0 0 15px ${catGlow}` : 'none', transition: 'text-shadow 0.5s ease' }}>
+              {formatClock(timer.remainingMs)}
+            </h2>
+            <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-60 mt-1">
+              {timer.mode === "focus" ? "FOCUS" : "BREAK"}
+            </span>
+          </div>
+        </div>
+
+        {/* Floating Controls */}
+        <div className="absolute bottom-4 flex items-center gap-3 bg-[var(--bg-elevated)]/90 backdrop-blur-md rounded-full p-1.5 border border-white/5 opacity-0 hover:opacity-100 transition-opacity duration-300 z-50">
+          {showStart ? (
+            <button onClick={() => timer.mode === "focus" ? startFocusSession() : setTimer(c => startTimer(c, Date.now(), "break"))} className="w-8 h-8 rounded-full flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform" style={{ backgroundColor: catColor }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
+          ) : (
+            <>
+              <button onClick={() => setTimer(c => showPause ? pauseTimer(c, Date.now()) : resumeTimer(c, Date.now()))} className="w-8 h-8 rounded-full bg-[var(--bg-surface)] text-[var(--accent)] flex items-center justify-center hover:bg-white/10 hover:scale-105 active:scale-95 transition-transform">
+                {showPause ? <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg> : <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>}
+              </button>
+              <button onClick={() => setTimer(c => stopTimer(c))} className="w-8 h-8 rounded-full text-[var(--text-muted)] hover:text-[var(--accent)] flex items-center justify-center hover:bg-white/10 hover:scale-105 active:scale-95 transition-transform">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>
+              </button>
+            </>
+          )}
+          <button onClick={onExpand} className="w-8 h-8 rounded-full text-[var(--text-muted)] hover:text-white flex items-center justify-center hover:bg-white/10 ml-1 border-l border-white/10 pl-2 rounded-l-none" title="Expand">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full">

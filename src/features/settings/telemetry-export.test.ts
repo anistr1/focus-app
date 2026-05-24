@@ -23,7 +23,8 @@ describe("telemetry-export", () => {
       animationIntensity: "reduced",
       telemetryOptIn: true,
       launchOnStartup: true,
-      minimizeToTrayOnClose: false
+      minimizeToTrayOnClose: false,
+      autoStartBreak: false
     });
 
     const output = buildTelemetryExport(Date.UTC(2026, 4, 24, 16, 0, 0));

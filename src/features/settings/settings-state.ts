@@ -16,6 +16,7 @@ export type AppSettings = {
   telemetryOptIn: boolean;
   launchOnStartup: boolean;
   minimizeToTrayOnClose: boolean;
+  autoStartBreak: boolean;
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -28,7 +29,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   animationIntensity: "full",
   telemetryOptIn: false,
   launchOnStartup: false,
-  minimizeToTrayOnClose: false
+  minimizeToTrayOnClose: false,
+  autoStartBreak: false
 };
 
 function normalize(input: Partial<AppSettings>): AppSettings {
@@ -54,7 +56,8 @@ function normalize(input: Partial<AppSettings>): AppSettings {
         : "full",
     telemetryOptIn: input.telemetryOptIn === true,
     launchOnStartup: input.launchOnStartup === true,
-    minimizeToTrayOnClose: input.minimizeToTrayOnClose === true
+    minimizeToTrayOnClose: input.minimizeToTrayOnClose === true,
+    autoStartBreak: input.autoStartBreak === true
   };
 }
 

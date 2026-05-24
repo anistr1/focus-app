@@ -295,15 +295,16 @@ export function SettingsCard() {
             </div>
 
             <div className="flex items-center justify-between p-4">
-              <label htmlFor="autoStart" className="text-sm text-[var(--text-primary)] opacity-50">
+              <label htmlFor="autoStart" className="text-sm text-[var(--text-primary)]">
                 Auto-start break
               </label>
               <input
                 type="checkbox"
                 id="autoStart"
-                disabled
-                className="toggle-checkbox opacity-50 cursor-not-allowed"
-                aria-label="Toggle auto start"
+                checked={settings.autoStartBreak}
+                onChange={(e) => handleChange({ autoStartBreak: e.target.checked })}
+                className="toggle-checkbox"
+                aria-label="Toggle auto start break"
               />
             </div>
           </div>
