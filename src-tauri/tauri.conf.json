@@ -45,7 +45,7 @@
   },
   "plugins": {
     "autostart": {},
-    "notification": {},
+    "notification": null,
     "updater": {}
   }
 }
