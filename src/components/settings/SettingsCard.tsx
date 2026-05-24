@@ -99,7 +99,7 @@ export function SettingsCard() {
         {/* Categories Section */}
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '100ms' }}>
           <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-3 px-1">Categories</h3>
-          <div className="glass-panel rounded-2xl p-4 space-y-4">
+          <div className="glass-premium hover-glow rounded-2xl p-4 space-y-4">
             <p className="text-xs text-[var(--text-muted)] mb-2">
               Manage your focus categories. Colors help distinguish them in your analytics.
             </p>
@@ -121,7 +121,7 @@ export function SettingsCard() {
                           className="fixed inset-0 z-40" 
                           onClick={() => setOpenColorPickerId(null)} 
                         />
-                        <div className="absolute left-0 top-8 z-50 glass-panel rounded-xl p-3 shadow-xl border border-[var(--border-subtle)] w-40 flex flex-wrap gap-2">
+                        <div className="absolute left-0 top-8 z-50 glass-premium hover-glow rounded-xl p-3 shadow-xl border border-[var(--border-subtle)] w-40 flex flex-wrap gap-2">
                           {PREDEFINED_COLORS.map(c => (
                             <button
                               key={c}
@@ -178,7 +178,7 @@ export function SettingsCard() {
         {/* Timer Section */}
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '200ms' }}>
           <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-3 px-1">Timer</h3>
-          <div className="glass-panel rounded-2xl overflow-hidden p-4 space-y-6">
+          <div className="glass-premium hover-glow rounded-2xl overflow-hidden p-4 space-y-6">
             
             <div className="flex flex-col gap-3">
               <label className="text-sm text-[var(--text-primary)]">Focus Duration</label>
@@ -224,7 +224,7 @@ export function SettingsCard() {
         {/* Behavior Section */}
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '300ms' }}>
           <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-3 px-1">Behavior</h3>
-          <div className="glass-panel rounded-2xl overflow-hidden">
+          <div className="glass-premium hover-glow rounded-2xl overflow-hidden">
             
             <div className="flex items-center justify-between p-4 border-b border-[var(--border-subtle)]">
               <label htmlFor="breathingEnabled" className="text-sm text-[var(--text-primary)]">
@@ -313,7 +313,7 @@ export function SettingsCard() {
         {/* Shortcuts Section */}
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '400ms' }}>
           <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-3 px-1">Shortcuts</h3>
-          <div className="glass-panel rounded-2xl overflow-hidden p-4">
+          <div className="glass-premium hover-glow rounded-2xl overflow-hidden p-4">
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between py-2 border-b border-[var(--border-subtle)]">
                 <span className="text-sm text-[var(--text-primary)]">Start/Pause Timer</span>
@@ -346,7 +346,7 @@ export function SettingsCard() {
         {/* Data Section */}
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '500ms' }}>
           <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-3 px-1">Data</h3>
-          <div className="glass-panel rounded-2xl overflow-hidden p-4">
+          <div className="glass-premium hover-glow rounded-2xl overflow-hidden p-4">
             <p className="text-sm text-[var(--text-primary)] mb-2">Export Data</p>
             <p className="text-xs text-[var(--text-muted)] mb-4">
               Download your sessions, checkpoints, and preferences as JSON.
@@ -366,7 +366,7 @@ export function SettingsCard() {
         {/* Danger Zone Section */}
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '600ms' }}>
           <h3 className="text-xs font-medium uppercase tracking-wide text-red-500/70 mb-3 px-1">Danger Zone</h3>
-          <div className="glass-panel rounded-2xl overflow-hidden p-4 border border-red-500/20 bg-red-500/5">
+          <div className="glass-premium hover-glow rounded-2xl overflow-hidden p-4 border border-red-500/20 bg-red-500/5">
             <p className="text-sm text-red-400 mb-2">Reset App Data</p>
             <p className="text-xs text-[var(--text-muted)] mb-4">
               This will permanently delete all your sessions, categories, and reset all settings to their defaults. This action cannot be undone.

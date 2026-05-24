@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Category } from "../../features/categories/categories-state";
 import { CategoryBreakdownItem } from "../../features/analytics/analytics-summary";
 import { formatDuration } from "./AnalyticsCard";
+import { motion, AnimatePresence } from "framer-motion";
 
 type CategoryAccordionProps = {
   taskBreakdown: CategoryBreakdownItem[];
@@ -125,44 +126,48 @@ export function CategoryAccordion({
                 </div>
 
                 {/* Tasks Expanded List */}
-                <div
-                  className="accordion-content"
-                  style={{
-                    maxHeight: isExpanded ? `${item.tasks.length * 28 + 8}px` : "0px",
-                    opacity: isExpanded ? 1 : 0
-                  }}
-                >
-                  <div className="pl-3 pr-2 pb-2 pt-1 flex flex-col gap-0.5 border-t border-[var(--border-subtle)]/30 bg-[var(--bg-surface)]/20">
-                    {item.tasks.map((task, tIdx) => {
-                      const displayName = task.intention === "" ? "no intention set" : task.intention;
-                      const isNoIntention = task.intention === "";
-                      const connector = tIdx === item.tasks.length - 1 ? "└─" : "├─";
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 26 }}
+                      className="overflow-hidden border-t border-[var(--border-subtle)]/30 bg-[var(--bg-surface)]/20 rounded-b-xl"
+                    >
+                      <div className="pl-3 pr-2 pb-2 pt-1 flex flex-col gap-0.5">
+                        {item.tasks.map((task, tIdx) => {
+                          const displayName = task.intention === "" ? "no intention set" : task.intention;
+                          const isNoIntention = task.intention === "";
+                          const connector = tIdx === item.tasks.length - 1 ? "└─" : "├─";
 
-                      return (
-                        <div
-                          key={tIdx}
-                          className="flex justify-between items-center text-[11px] py-1 pl-4 pr-1.5 hover:bg-[var(--bg-elevated)]/30 rounded transition-colors group"
-                        >
-                          <span className={`truncate max-w-[220px] ${
-                            isNoIntention ? "italic text-[var(--text-muted)]" : "text-[var(--text-secondary)] font-medium"
-                          }`}>
-                            <span className="text-[var(--text-muted)] font-mono mr-1.5">{connector}</span>
-                            {displayName}
-                          </span>
-                          <span className="dotted-leader" />
-                          <div className="flex items-center gap-2 shrink-0 pl-1">
-                            <span className="text-[var(--text-muted)] text-[9px] bg-[var(--border-subtle)]/60 px-1 rounded-sm font-semibold tabular-nums">
-                              &times;{task.sessionCount}
-                            </span>
-                            <span className="text-[var(--text-primary)] font-medium tabular-nums text-xs">
-                              {formatDuration(task.totalMs)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                          return (
+                            <div
+                              key={tIdx}
+                              className="flex justify-between items-center text-[11px] py-1 pl-4 pr-1.5 hover:bg-[var(--bg-elevated)]/30 rounded transition-colors group"
+                            >
+                              <span className={`truncate max-w-[220px] ${
+                                isNoIntention ? "italic text-[var(--text-muted)]" : "text-[var(--text-secondary)] font-medium"
+                              }`}>
+                                <span className="text-[var(--text-muted)] font-mono mr-1.5">{connector}</span>
+                                {displayName}
+                              </span>
+                              <span className="dotted-leader" />
+                              <div className="flex items-center gap-2 shrink-0 pl-1">
+                                <span className="text-[var(--text-muted)] text-[9px] bg-[var(--border-subtle)]/60 px-1 rounded-sm font-semibold tabular-nums">
+                                  &times;{task.sessionCount}
+                                </span>
+                                <span className="text-[var(--text-primary)] font-medium tabular-nums text-xs">
+                                  {formatDuration(task.totalMs)}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })

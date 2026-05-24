@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { AnalyticsPoint } from "../../features/analytics/analytics-summary";
 import { Category } from "../../features/categories/categories-state";
 import { usePrefersReducedMotion } from "../../features/accessibility/use-prefers-reduced-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 type TrendChartProps = {
   trend: AnalyticsPoint[];
@@ -93,7 +94,7 @@ export function TrendChart({
   }, [hoveredPoint, drillDownDateMs, trend, categoryMap]);
 
   return (
-    <div className="glass-panel rounded-xl p-3 mb-3 flex flex-col shrink-0" style={{ height: "126px" }}>
+    <div className="glass-premium hover-glow rounded-xl p-3 mb-3 flex flex-col shrink-0" style={{ height: "126px" }}>
       {/* Chart Header Row */}
       <div className="flex justify-between items-center mb-2 shrink-0">
         <span className="text-[9px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider truncate max-w-[340px]">
@@ -122,11 +123,28 @@ export function TrendChart({
           return (
             <div
               key={idx}
-              className="flex-1 flex flex-col items-center h-full group cursor-pointer justify-end"
+              className="flex-1 flex flex-col items-center h-full group cursor-pointer justify-end relative"
               onMouseEnter={() => setHoveredPoint(point)}
               onMouseLeave={() => setHoveredPoint(null)}
               onClick={() => handleBarClick(point)}
             >
+              {/* Floating Tooltip Pill */}
+              <AnimatePresence>
+                {hoveredPoint === point && point.minutes > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 20 }}
+                    className="absolute z-30 bottom-full mb-2 pointer-events-none"
+                  >
+                    <div className="glass-panel text-[10px] text-white font-medium px-2.5 py-1.5 rounded-lg shadow-2xl flex flex-col items-center text-center gap-0.5 whitespace-nowrap min-w-[70px] bg-black/85 border border-white/10">
+                      <span className="text-[var(--text-secondary)] font-bold">{point.dayLabel}</span>
+                      <span className="text-[var(--accent)] font-extrabold text-[11px]">{point.minutes}m</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               {/* Vertical Stack Bar */}
               <div className="w-full flex-1 flex flex-col justify-end min-h-0 relative">
                 {hasData ? (

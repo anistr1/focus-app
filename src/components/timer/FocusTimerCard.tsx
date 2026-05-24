@@ -34,6 +34,9 @@ import {
 import { readSessionHistory, SESSION_HISTORY_UPDATED_EVENT } from "../../features/sessions/session-history";
 import { buildAnalyticsSummary } from "../../features/analytics/analytics-summary";
 import { CategorySelector } from "./CategorySelector";
+import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
+import { Play, Pause, Square, SkipForward } from "lucide-react";
 
 function formatClock(totalMs: number): string {
   const totalSeconds = Math.max(0, Math.ceil(totalMs / 1000));
@@ -290,6 +293,15 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
       void sound.play().catch(() => {});
 
       if (timer.mode === "focus") {
+        const catColor = categories.find((c) => c.id === categoryId)?.color || "var(--accent)";
+        confetti({
+          particleCount: 80,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: [catColor, "#ffffff", "var(--accent)"],
+          disableForReducedMotion: true
+        });
+
         lastIntentionRef.current = intention;
         recordCompletedSession(
           createSessionRecord({
@@ -637,7 +649,11 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
                 )}
                 <h2 
                   className="text-6xl font-light tabular-nums tracking-tight text-[var(--text-primary)]"
-                  style={{ textShadow: timer.status === 'running' ? `0 0 20px ${catGlow}` : 'none', transition: 'text-shadow 0.5s ease' }}
+                  style={{ 
+                    fontFamily: "'Outfit', sans-serif",
+                    textShadow: timer.status === 'running' ? `0 0 20px ${catGlow}` : 'none', 
+                    transition: 'text-shadow 0.5s ease' 
+                  }}
                 >
                   {formatClock(timer.remainingMs)}
                 </h2>
@@ -669,8 +685,11 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
             {/* Bottom Control Buttons (Play, Pause, Stop) */}
             <div className="flex items-center gap-6 mt-2">
               {showStart ? (
-                <button
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 17 }}
                   onClick={() => {
                     if (timer.mode === "focus") {
                       startFocusSession();
@@ -679,49 +698,45 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
                     setActiveCompletionKey(`break-${Date.now()}`);
                     setTimer((current) => startTimer(current, Date.now(), "break"));
                   }}
-                  className="flex items-center justify-center w-16 h-16 rounded-full text-white transition-transform hover:scale-105 active:scale-95"
+                  className="flex items-center justify-center w-16 h-16 rounded-full text-white cursor-pointer shadow-lg"
                   style={{ backgroundColor: catColor, boxShadow: `0 4px 20px ${catGlow}` }}
                   aria-label="Start Timer"
                 >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-1">
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                  </svg>
-                </button>
+                  <Play className="w-6 h-6 fill-white ml-0.5" />
+                </motion.button>
               ) : null}
 
               {showPause || showResume ? (
                 <>
-
-                  <button
+                  <motion.button
                     type="button"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 17 }}
                     onClick={() => setTimer((current) => showPause ? pauseTimer(current, Date.now()) : resumeTimer(current, Date.now()))}
-                    className="flex items-center justify-center w-16 h-16 rounded-full bg-[var(--bg-elevated)] text-[var(--accent)] hover:bg-[var(--bg-surface)] transition-transform hover:scale-105 active:scale-95 border border-[var(--border-subtle)]"
+                    className="flex items-center justify-center w-16 h-16 rounded-full bg-[var(--bg-elevated)] text-[var(--accent)] hover:bg-[var(--bg-surface)] border border-[var(--border-subtle)] cursor-pointer shadow-md"
                     aria-label={showPause ? "Pause Timer" : "Resume Timer"}
                   >
                     {showPause ? (
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                        <rect x="6" y="4" width="4" height="16"></rect>
-                        <rect x="14" y="4" width="4" height="16"></rect>
-                      </svg>
+                      <Pause className="w-6 h-6 fill-current" />
                     ) : (
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="ml-1">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
+                      <Play className="w-6 h-6 fill-current ml-0.5" />
                     )}
-                  </button>
+                  </motion.button>
 
-                  <button
+                  <motion.button
                     type="button"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 17 }}
                     onClick={() => {
                       setTimer((current) => stopTimer(current));
                     }}
-                    className="flex items-center justify-center w-12 h-12 rounded-full bg-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-elevated)] transition-transform hover:scale-105 active:scale-95"
+                    className="flex items-center justify-center w-12 h-12 rounded-full bg-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-elevated)] cursor-pointer"
                     aria-label="Stop Timer"
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                      <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-                    </svg>
-                  </button>
+                    <Square className="w-5 h-5 fill-current" />
+                  </motion.button>
                 </>
               ) : null}
             </div>
@@ -729,7 +744,7 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
 
           {/* Recovery / Error Messages */}
           {pendingRecovery ? (
-            <div className="glass-panel absolute z-[100] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl px-6 py-5 text-sm text-[var(--text-secondary)] shadow-2xl max-w-[320px] text-center backdrop-blur-md bg-black/40 border border-white/10 w-[90%]">
+            <div className="glass-premium hover-glow absolute z-[100] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl px-6 py-5 text-sm text-[var(--text-secondary)] shadow-2xl max-w-[320px] text-center backdrop-blur-md bg-black/40 border border-white/10 w-[90%]">
               <p className="mb-4 text-white text-base font-medium">Session interrupted</p>
               <div className="flex gap-3 justify-center">
                 <button
@@ -751,7 +766,7 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
           ) : null}
 
           {timer.lastError ? (
-            <div className="glass-panel absolute z-[100] top-4 left-1/2 -translate-x-1/2 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg flex items-center gap-3">
+            <div className="glass-premium hover-glow absolute z-[100] top-4 left-1/2 -translate-x-1/2 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg flex items-center gap-3">
               <span className="whitespace-nowrap">{timer.lastError}</span>
               <button 
                 onClick={() => setTimer(current => ({ ...current, lastError: null }))}

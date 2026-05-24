@@ -53,15 +53,15 @@ export function SessionHistoryCard() {
       </div>
 
       <div className="mb-8 grid grid-cols-3 gap-3 text-center">
-        <div className="glass-panel flex flex-col rounded-2xl p-3">
+        <div className="glass-premium hover-glow flex flex-col rounded-2xl p-3">
           <span className="text-xs text-[var(--text-muted)] mb-1">Total</span>
           <span className="text-xl font-light text-[var(--text-primary)]">{formatMinutes(summary.totalFocusMs)}</span>
         </div>
-        <div className="glass-panel flex flex-col rounded-2xl p-3">
+        <div className="glass-premium hover-glow flex flex-col rounded-2xl p-3">
           <span className="text-xs text-[var(--text-muted)] mb-1">Sessions</span>
           <span className="text-xl font-light text-[var(--text-primary)]">{summary.completedSessions}</span>
         </div>
-        <div className="glass-panel flex flex-col rounded-2xl p-3">
+        <div className="glass-premium hover-glow flex flex-col rounded-2xl p-3">
           <span className="text-xs text-[var(--text-muted)] mb-1">Avg</span>
           <span className="text-xl font-light text-[var(--text-primary)]">{formatMinutes(summary.averageSessionMs)}</span>
         </div>
@@ -93,7 +93,7 @@ export function SessionHistoryCard() {
                 className="relative pl-6 after:absolute after:left-[11px] after:top-7 after:-bottom-5 after:w-[1px] after:bg-[var(--border-subtle)] last:after:hidden"
               >
                 <span className="absolute left-2 top-3 h-2 w-2 rounded-full" style={{ backgroundColor: dotColor }} />
-                <div className="glass-panel rounded-xl px-4 py-3">
+                <div className="glass-premium hover-glow rounded-xl px-4 py-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-[var(--text-primary)]">
                       {entry.intention || "Focus session"}
