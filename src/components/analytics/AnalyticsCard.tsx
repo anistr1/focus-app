@@ -1,22 +1,37 @@
 import { useEffect, useMemo, useState } from "react";
 import { buildAnalyticsSummary, type DateRangeFilter } from "../../features/analytics/analytics-summary";
-import { usePrefersReducedMotion } from "../../features/accessibility/use-prefers-reduced-motion";
 import {
   readSessionHistory,
   SESSION_HISTORY_UPDATED_EVENT,
   type SessionRecord
 } from "../../features/sessions/session-history";
 import { readCategories, CATEGORIES_UPDATED_EVENT, Category } from "../../features/categories/categories-state";
+import { KpiStrip } from "./KpiStrip";
+import { TrendChart } from "./TrendChart";
+import { CategoryAccordion } from "./CategoryAccordion";
+import { QualityFooter } from "./QualityFooter";
 
-function formatMinutes(ms: number): string {
-  return `${Math.round(ms / 60000)}m`;
+export function formatDuration(ms: number): string {
+  const totalMinutes = Math.round(ms / 60000);
+  if (totalMinutes < 60) {
+    return `${totalMinutes}m`;
+  }
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+}
+
+function dayStart(timestampMs: number): number {
+  const date = new Date(timestampMs);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
 
 export function AnalyticsCard() {
   const [records, setRecords] = useState<SessionRecord[]>(() => readSessionHistory());
   const [categories, setCategories] = useState<Category[]>(() => readCategories());
   const [filter, setFilter] = useState<DateRangeFilter>('7-days');
-  const reduceMotion = usePrefersReducedMotion();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [drillDownDateMs, setDrillDownDateMs] = useState<number | null>(null);
 
   useEffect(() => {
     const handler = () => setRecords(readSessionHistory());
@@ -30,113 +45,138 @@ export function AnalyticsCard() {
     return () => window.removeEventListener(CATEGORIES_UPDATED_EVENT, handler);
   }, []);
 
+  // 1. Build general period summary (unfiltered by drillDown)
   const summary = useMemo(() => buildAnalyticsSummary(records, filter), [records, filter]);
-  const trendMax = Math.max(1, ...summary.trend.map((point) => point.minutes));
 
-  // Build a lookup map for fast category resolving
-  const categoryMap = useMemo(() => {
-    return new Map(categories.map((c) => [c.id, c]));
-  }, [categories]);
+  // 2. Filter records dynamically for the Category Breakdown Accordion when tapping a trend bar
+  const filteredRecordsForAccordion = useMemo(() => {
+    if (drillDownDateMs === null) {
+      return records;
+    }
+
+    if (filter === '30-days') {
+      const DAY_MS = 24 * 60 * 60 * 1000;
+      return records.filter((r) => {
+        const dayKey = dayStart(r.completedAtMs);
+        return dayKey >= drillDownDateMs && dayKey < drillDownDateMs + 6 * DAY_MS;
+      });
+    } else if (filter === 'all-time') {
+      const targetDate = new Date(drillDownDateMs);
+      return records.filter((r) => {
+        const d = new Date(r.completedAtMs);
+        return d.getMonth() === targetDate.getMonth() && d.getFullYear() === targetDate.getFullYear();
+      });
+    } else {
+      return records.filter((r) => dayStart(r.completedAtMs) === drillDownDateMs);
+    }
+  }, [records, drillDownDateMs, filter]);
+
+  // 3. Build drill-down summary for accordion
+  const drillDownSummary = useMemo(() => {
+    return buildAnalyticsSummary(filteredRecordsForAccordion, filter, drillDownDateMs || Date.now());
+  }, [filteredRecordsForAccordion, filter, drillDownDateMs]);
+
+  // Handle active category selection
+  const activeCategory = useMemo(() => {
+    return categories.find((c) => c.id === selectedCategoryId);
+  }, [categories, selectedCategoryId]);
 
   return (
-    <div className="flex h-full flex-col pt-2 pb-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Analytics</h2>
+    <div
+      className="flex flex-col select-none overflow-hidden w-full pt-1 pb-4"
+      style={{ height: "540px" }}
+    >
+      {/* Header + Filter Bar (40px height budget) */}
+      <div className="flex items-center justify-between mb-3 shrink-0" style={{ height: "40px" }}>
+        <h2 className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+          Analytics
+        </h2>
         
-        <select 
-          value={filter} 
-          onChange={(e) => setFilter(e.target.value as DateRangeFilter)}
-          className="bg-transparent text-xs text-[var(--text-primary)] font-medium outline-none border border-[var(--border-subtle)] rounded-md px-2 py-1 appearance-none hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer"
-        >
-          <option value="today">Today</option>
-          <option value="yesterday">Yesterday</option>
-          <option value="7-days">Last 7 Days</option>
-          <option value="30-days">Last 30 Days</option>
-          <option value="all-time">All Time</option>
-        </select>
-      </div>
+        <div className="flex gap-2">
+          {/* Category Dropdown Pill */}
+          <div 
+            className="glass-panel relative rounded-lg px-2.5 py-1 text-xs text-[var(--text-primary)] font-semibold transition-all cursor-pointer flex items-center"
+            style={{ 
+              borderColor: selectedCategoryId ? activeCategory?.color : "var(--border-subtle)",
+              boxShadow: selectedCategoryId ? `0 0 6px ${activeCategory?.color}30` : "none"
+            }}
+          >
+            <select
+              value={selectedCategoryId || ""}
+              onChange={(e) => setSelectedCategoryId(e.target.value || null)}
+              className="bg-transparent pr-4 outline-none border-none cursor-pointer text-[11px] font-semibold appearance-none text-left"
+              style={{ color: selectedCategoryId && activeCategory ? activeCategory.color : "var(--text-primary)" }}
+            >
+              <option value="">All Categories</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id} style={{ color: c.color }}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <span className="text-[8px] absolute right-2.5 pointer-events-none text-[var(--text-muted)] font-bold">▼</span>
+          </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-8">
-        <div className="glass-panel flex flex-col justify-center rounded-2xl p-4">
-          <span className="text-xs text-[var(--text-muted)] mb-1">Total Time</span>
-          <span className="text-2xl font-light text-[var(--text-primary)]">{formatMinutes(summary.periodTotalMs)}</span>
-        </div>
-        <div className="glass-panel flex flex-col justify-center rounded-2xl p-4">
-          <span className="text-xs text-[var(--text-muted)] mb-1">Daily Average</span>
-          <span className="text-2xl font-light text-[var(--text-primary)]">{formatMinutes(summary.periodDailyAvgMs)}</span>
-        </div>
-        <div className="glass-panel flex flex-col justify-center rounded-2xl p-4">
-          <span className="text-xs text-[var(--text-muted)] mb-1">Sessions</span>
-          <span className="text-2xl font-light text-[var(--text-primary)]">{summary.periodSessions}</span>
-        </div>
-        <div className="glass-panel flex flex-col justify-center rounded-2xl p-4">
-          <span className="text-xs text-[var(--text-muted)] mb-1">Current Streak</span>
-          <span className="text-2xl font-light text-[var(--text-primary)]">{summary.currentStreakDays} <span className="text-sm">days</span></span>
-        </div>
-      </div>
-
-      <div className="glass-panel rounded-2xl p-5 mb-4">
-        <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-6">Trend</h3>
-        
-        <div
-          data-testid="weekly-trend-bars"
-          className={`analytics-bars h-32 ${reduceMotion ? "motion-reduce" : "motion-safe"} ${
-            summary.trend.length > 7 ? "overflow-x-auto overflow-y-hidden snap-x justify-start" : "justify-between"
-          }`}
-        >
-          {summary.trend.map((point) => (
-            <div key={point.dayLabel} className="analytics-bar-item h-full justify-end group min-w-[30px] snap-end">
-              <div
-                className="analytics-bar group-hover:opacity-100"
-                style={{ height: `${Math.max(8, Math.round((point.minutes / trendMax) * 100))}%` }}
-                aria-label={`${point.dayLabel}: ${point.minutes} minutes`}
-              />
-              <span className="mt-2 text-xs font-medium text-[var(--text-secondary)] whitespace-nowrap">{point.dayLabel}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {summary.categoryTotals.length > 0 && (
-        <div className="glass-panel rounded-2xl p-5 mb-4">
-          <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] mb-4">Category Breakdown</h3>
-          <div className="flex flex-col gap-3">
-            {summary.categoryTotals.map(({ categoryId, totalMs }) => {
-              const cat = categoryMap.get(categoryId);
-              const name = cat?.name || (categoryId === "uncategorized" ? "Uncategorized" : "Unknown");
-              const color = cat?.color || "var(--border-subtle)";
-              
-              // Find max total to calculate relative bar width
-              const maxCatTotal = Math.max(1, summary.categoryTotals[0].totalMs);
-              const pct = Math.max(2, Math.round((totalMs / maxCatTotal) * 100));
-
-              return (
-                <div key={categoryId} className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center text-xs">
-                    <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                      {name}
-                    </div>
-                    <span className="text-[var(--text-primary)] font-medium tabular-nums">{formatMinutes(totalMs)}</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-1000 ease-out" 
-                      style={{ width: `${pct}%`, backgroundColor: color }} 
-                    />
-                  </div>
-                </div>
-              );
-            })}
+          {/* Date Range Dropdown Pill */}
+          <div 
+            className="glass-panel relative rounded-lg px-2.5 py-1 text-xs text-[var(--text-primary)] font-semibold transition-all cursor-pointer flex items-center"
+            style={{ 
+              borderColor: filter !== "7-days" ? "var(--accent)" : "var(--border-subtle)",
+              boxShadow: filter !== "7-days" ? "0 0 6px var(--accent-glow)" : "none"
+            }}
+          >
+            <select 
+              value={filter} 
+              onChange={(e) => {
+                setFilter(e.target.value as DateRangeFilter);
+                setDrillDownDateMs(null); // Clear drill down when range changes
+              }}
+              className="bg-transparent pr-4 outline-none border-none cursor-pointer text-[11px] font-semibold appearance-none text-left"
+              style={{ color: filter !== "7-days" ? "var(--accent-bright)" : "var(--text-primary)" }}
+            >
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="7-days">Last 7 Days</option>
+              <option value="30-days">Last 30 Days</option>
+              <option value="all-time">All Time</option>
+            </select>
+            <span className="text-[8px] absolute right-2.5 pointer-events-none text-[var(--text-muted)] font-bold">▼</span>
           </div>
         </div>
-      )}
-
-      <div className="flex justify-center mt-2">
-        <p className="text-xs text-[var(--text-muted)] italic">
-          Longest streak: {summary.longestStreakDays} days — keep going.
-        </p>
       </div>
+
+      {/* KPI Strip (64px height budget) */}
+      <KpiStrip
+        totalMs={summary.periodTotalMs}
+        sessionsCount={summary.periodSessions}
+        completionRate={summary.completionRate}
+        streakDays={summary.currentStreakDays}
+      />
+
+      {/* Stacked Trend Chart (126px height budget, fits within 110px budget + margins) */}
+      <TrendChart
+        trend={summary.trend}
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        onSelectCategory={setSelectedCategoryId}
+        drillDownDateMs={drillDownDateMs}
+        onSelectDrillDownDate={setDrillDownDateMs}
+      />
+
+      {/* Category Accordion (290px height budget, internally scrollable) */}
+      <CategoryAccordion
+        taskBreakdown={drillDownSummary.taskBreakdown}
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        onSelectCategory={setSelectedCategoryId}
+      />
+
+      {/* Quality Footer Strip (36px height budget) */}
+      <QualityFooter
+        bestFocusWindowHour={summary.bestFocusWindowHour}
+        avgSessionMs={summary.avgSessionMs}
+        completionRate={summary.completionRate}
+      />
     </div>
   );
 }

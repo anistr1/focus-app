@@ -32,9 +32,9 @@ describe("AnalyticsCard", () => {
 
     render(<AnalyticsCard />);
     expect(screen.getByRole("heading", { name: /^analytics$/i })).toBeInTheDocument();
-    expect(screen.getByText(/Total Time/i)).toBeInTheDocument();
-    expect(screen.getByText(/Current Streak/i)).toBeInTheDocument();
-    expect(screen.getByText(/Trend/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Total/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Streak/i)[0]).toBeInTheDocument();
+    expect(screen.getByTestId("weekly-trend-bars")).toBeInTheDocument();
   });
 
   it("disables chart transitions when reduced motion is preferred", () => {

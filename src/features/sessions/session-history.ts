@@ -70,7 +70,7 @@ export function recordCompletedSession(record: SessionRecord): void {
   if (duplicate) {
     return;
   }
-  const updated = [record, ...history].slice(0, 100);
+  const updated = [record, ...history].slice(0, 500);
   writeSessionHistory(updated);
 }
 
