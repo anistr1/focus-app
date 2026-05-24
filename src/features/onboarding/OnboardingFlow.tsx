@@ -40,7 +40,7 @@ const steps: StepDefinition[] = [
   {
     title: "All set.",
     description: "Your focus space is ready.",
-    canSkip: true
+    canSkip: false
   }
 ];
 
@@ -68,6 +68,12 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   function handleSkip() {
     if (!steps[stepIndex].canSkip) {
+      return;
+    }
+    if (isLastStep) {
+      const completedState: OnboardingState = { ...state, completed: true };
+      writeOnboardingState(completedState);
+      onComplete();
       return;
     }
     setStepIndex((current) => current + 1);
