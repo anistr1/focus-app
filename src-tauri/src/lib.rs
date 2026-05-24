@@ -22,8 +22,9 @@ fn emit_tray_action(app: &AppHandle, action: &str) {
 }
 
 fn startup_log_path() -> PathBuf {
-    let mut base = std::env::var_os("APPDATA")
+    let mut base = std::env::var_os("LOCALAPPDATA")
         .map(PathBuf::from)
+        .or_else(|| std::env::var_os("APPDATA").map(PathBuf::from))
         .unwrap_or_else(std::env::temp_dir);
     base.push("Focus App");
     base.push("logs");
@@ -112,7 +113,7 @@ pub fn run() {
     init_startup_logging();
     log_startup("boot: entering tauri run");
 
-    tauri::Builder::default()
+    let app_result = tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
@@ -137,6 +138,10 @@ pub fn run() {
             log_startup("setup: complete");
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running focus app");
+        .run(tauri::generate_context!());
+
+    if let Err(error) = app_result {
+        log_startup(&format!("fatal: tauri run failed: {error}"));
+        eprintln!("Fatal Tauri run error: {error}");
+    }
 }
