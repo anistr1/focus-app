@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Focus App",
         "width": 1280,
         "height": 800,
