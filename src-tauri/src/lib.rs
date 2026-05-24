@@ -1,4 +1,8 @@
 use serde::Serialize;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
+use std::panic;
+use std::path::PathBuf;
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Emitter, Manager};
@@ -15,6 +19,34 @@ fn emit_tray_action(app: &AppHandle, action: &str) {
             action: action.to_string(),
         },
     );
+}
+
+fn startup_log_path() -> PathBuf {
+    let mut base = std::env::var_os("APPDATA")
+        .map(PathBuf::from)
+        .unwrap_or_else(std::env::temp_dir);
+    base.push("Focus App");
+    base.push("logs");
+    base.push("startup.log");
+    base
+}
+
+fn log_startup(message: &str) {
+    let path = startup_log_path();
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
+        let _ = writeln!(file, "{message}");
+    }
+}
+
+fn init_startup_logging() {
+    panic::set_hook(Box::new(|panic_info| {
+        log_startup(&format!("panic: {panic_info}"));
+    }));
+    log_startup("boot: startup logging initialized");
 }
 
 fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
@@ -77,6 +109,9 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    init_startup_logging();
+    log_startup("boot: entering tauri run");
+
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -85,14 +120,21 @@ pub fn run() {
             Some(vec!["--autostart"]),
         ))
         .setup(|app| {
+            log_startup("setup: start");
             if let Err(error) = setup_tray(app.handle()) {
+                log_startup(&format!("setup: tray init failed: {error}"));
                 eprintln!("Failed to initialize tray icon: {error}");
+            } else {
+                log_startup("setup: tray initialized");
             }
             if std::env::args().any(|arg| arg == "--autostart") {
+                log_startup("setup: autostart argument detected");
                 if let Some(main_window) = app.get_webview_window("main") {
                     let _ = main_window.hide();
+                    log_startup("setup: main window hidden for autostart");
                 }
             }
+            log_startup("setup: complete");
             Ok(())
         })
         .run(tauri::generate_context!())
