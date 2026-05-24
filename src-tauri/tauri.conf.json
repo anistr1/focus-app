@@ -42,10 +42,5 @@
         "language": "en-US"
       }
     }
-  },
-  "plugins": {
-    "autostart": {},
-    "notification": null,
-    "updater": null
   }
 }
