@@ -46,11 +46,6 @@
   "plugins": {
     "autostart": {},
     "notification": {},
-    "updater": {},
-    "sql": {},
-    "store": {},
-    "window-state": {},
-    "global-shortcut": {},
-    "process": {}
+    "updater": {}
   }
 }

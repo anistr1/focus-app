@@ -13,11 +13,6 @@
     "core:tray:default",
     "autostart:default",
     "notification:default",
-    "process:default",
-    "sql:default",
-    "store:default",
-    "updater:default",
-    "window-state:default",
-    "global-shortcut:default"
+    "updater:default"
   ]
 }
