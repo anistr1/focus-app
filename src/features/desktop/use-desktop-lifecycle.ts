@@ -30,6 +30,13 @@ export function useDesktopLifecycle(): void {
         unlistenClose = await windowRef.onCloseRequested(async (event) => {
           const settings = readSettings();
           if (!settings.minimizeToTrayOnClose) {
+            event.preventDefault();
+            try {
+              const { invoke } = await import("@tauri-apps/api/core");
+              await invoke("exit_app");
+            } catch {
+              await windowRef.destroy();
+            }
             return;
           }
           event.preventDefault();

@@ -23,11 +23,12 @@ export function createSessionRecord(input: {
   completionKey: string;
   intention?: string;
   categoryId?: string;
+  completed?: boolean;
 }): SessionRecord {
   return {
     id: `${input.completionKey}-${input.completedAtMs}`,
     durationMs: input.durationMs,
-    completed: true,
+    completed: input.completed !== false,
     completedAtMs: input.completedAtMs,
     completionKey: input.completionKey,
     intention: input.intention,
@@ -76,7 +77,7 @@ export function recordCompletedSession(record: SessionRecord): void {
 export function getSessionHistorySummary(records: SessionRecord[]): SessionHistorySummary {
   const completed = records.filter((entry) => entry.completed);
   const completedSessions = completed.length;
-  const totalFocusMs = completed.reduce((sum, entry) => sum + entry.durationMs, 0);
+  const totalFocusMs = records.reduce((sum, entry) => sum + entry.durationMs, 0);
   const averageSessionMs = completedSessions === 0 ? 0 : Math.round(totalFocusMs / completedSessions);
   return { completedSessions, totalFocusMs, averageSessionMs };
 }

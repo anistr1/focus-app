@@ -14,6 +14,24 @@ export function AppShell() {
   const [activeTab, setActiveTab] = useState<Tab>("timer");
   const [timerStatus, setTimerStatus] = useState("idle");
 
+  const minimizeWindow = async () => {
+    try {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      await getCurrentWindow().minimize();
+    } catch (e) {
+      console.error("Failed to minimize window:", e);
+    }
+  };
+
+  const closeWindow = async () => {
+    try {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      await getCurrentWindow().close();
+    } catch (e) {
+      console.error("Failed to close window:", e);
+    }
+  };
+
   useEffect(() => {
     const handler = (e: Event) => {
       const status = (e as CustomEvent).detail;
@@ -35,20 +53,20 @@ export function AppShell() {
   }, []);
 
   return (
-    <main className="flex h-screen overflow-hidden bg-transparent">
-      {/* Left Navigation Sidebar */}
-      <nav className="flex w-[72px] shrink-0 flex-col items-center justify-between border-r border-[var(--border-subtle)] bg-[var(--bg-base)] py-6 z-50">
+    <main className="flex h-screen overflow-hidden bg-transparent select-none">
+      {/* Left Navigation Sidebar - Reduced width */}
+      <nav className="flex w-14 shrink-0 flex-col items-center justify-between border-r border-[var(--border-subtle)] bg-[var(--bg-base)] py-6 z-50">
         <div className="flex flex-col gap-6 w-full items-center">
           <button
             onClick={() => setActiveTab("timer")}
-            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center p-2.5 rounded-xl transition-all cursor-pointer ${
               activeTab === "timer" 
                 ? "text-[var(--accent)] bg-[var(--bg-elevated)] shadow-sm" 
                 : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]"
             }`}
             title="Timer"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
@@ -56,14 +74,14 @@ export function AppShell() {
           
           <button
             onClick={() => setActiveTab("analytics")}
-            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center p-2.5 rounded-xl transition-all cursor-pointer ${
               activeTab === "analytics" 
                 ? "text-[var(--accent)] bg-[var(--bg-elevated)] shadow-sm" 
                 : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]"
             }`}
             title="Analytics"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="20" x2="18" y2="10"></line>
               <line x1="12" y1="20" x2="12" y2="4"></line>
               <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -72,14 +90,14 @@ export function AppShell() {
 
           <button
             onClick={() => setActiveTab("sessions")}
-            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center p-2.5 rounded-xl transition-all cursor-pointer ${
               activeTab === "sessions" 
                 ? "text-[var(--accent)] bg-[var(--bg-elevated)] shadow-sm" 
                 : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]"
             }`}
             title="Sessions"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="8" y1="6" x2="21" y2="6"></line>
               <line x1="8" y1="12" x2="21" y2="12"></line>
               <line x1="8" y1="18" x2="21" y2="18"></line>
@@ -93,14 +111,14 @@ export function AppShell() {
         <div>
           <button
             onClick={() => setActiveTab("settings")}
-            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center p-2.5 rounded-xl transition-all cursor-pointer ${
               activeTab === "settings" 
                 ? "text-[var(--accent)] bg-[var(--bg-elevated)] shadow-sm" 
                 : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]"
             }`}
             title="Settings"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
@@ -108,27 +126,65 @@ export function AppShell() {
         </div>
       </nav>
 
-      <div className="flex flex-1 flex-col overflow-hidden relative">
-        {/* Title Bar Region (Draggable in Tauri) */}
-        <div data-tauri-drag-region className="flex h-10 shrink-0 items-center justify-between px-4 absolute top-0 left-0 right-0 z-50">
-          <span className="text-xs font-medium tracking-wide text-[var(--text-secondary)]"></span>
-          <div className="scale-75 origin-right">
-             <UpdateStatusCard />
+      {/* Main Content Area (Title bar + Tabs) */}
+      <div className="flex flex-1 flex-col overflow-hidden relative bg-[var(--bg-base)]">
+        {/* Premium Borderless Title Bar */}
+        <div 
+          data-tauri-drag-region 
+          className="flex h-12 shrink-0 items-center justify-between pl-4 pr-3 border-b border-[var(--border-subtle)] bg-[var(--bg-base)] z-50 select-none"
+        >
+          <div data-tauri-drag-region className="flex items-center gap-2">
+            {/* Logo and App Name */}
+            <span data-tauri-drag-region className="text-xs font-semibold tracking-wider text-[var(--accent)] flex items-center gap-1.5 opacity-80 pointer-events-none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin-slow">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a7 7 0 1 0 10 10"></path>
+              </svg>
+              Focus
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            <div className="scale-75 origin-right mr-1">
+               <UpdateStatusCard />
+            </div>
+            
+            {/* Minimize Button */}
+            <button 
+              onClick={minimizeWindow}
+              className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] transition-all cursor-pointer"
+              title="Minimize"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+            
+            {/* Close Button */}
+            <button 
+              onClick={closeWindow}
+              className="p-1 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
+              title="Close"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 relative overflow-hidden">
-          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-10 transition-all duration-500 ease-out ${activeTab === "timer" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-1 pointer-events-none z-0"}`}>
+        <div className="flex-1 relative overflow-hidden bg-transparent">
+          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-6 transition-all duration-500 ease-out ${activeTab === "timer" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-2 pointer-events-none z-0"}`}>
             <FocusTimerCard />
           </div>
-          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-10 transition-all duration-500 ease-out ${activeTab === "sessions" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-1 pointer-events-none z-0"}`}>
+          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-6 transition-all duration-500 ease-out ${activeTab === "sessions" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-2 pointer-events-none z-0"}`}>
             <SessionHistoryCard />
           </div>
-          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-10 transition-all duration-500 ease-out ${activeTab === "analytics" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-1 pointer-events-none z-0"}`}>
+          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-6 transition-all duration-500 ease-out ${activeTab === "analytics" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-2 pointer-events-none z-0"}`}>
             <AnalyticsCard />
           </div>
-          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-10 transition-all duration-500 ease-out ${activeTab === "settings" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-1 pointer-events-none z-0"}`}>
+          <div className={`absolute inset-0 overflow-y-auto px-6 pb-6 pt-6 transition-all duration-500 ease-out ${activeTab === "settings" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-2 pointer-events-none z-0"}`}>
             <SettingsCard />
           </div>
         </div>

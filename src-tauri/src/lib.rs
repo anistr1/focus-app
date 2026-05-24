@@ -108,12 +108,18 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+#[tauri::command]
+fn exit_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     init_startup_logging();
     log_startup("boot: entering tauri run");
 
     let app_result = tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![exit_app])
         // Temporary test mode: disable failing plugins to verify base app startup.
         // .plugin(tauri_plugin_notification::init())
         // .plugin(tauri_plugin_updater::Builder::new().build())

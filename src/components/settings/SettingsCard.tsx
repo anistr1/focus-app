@@ -37,6 +37,7 @@ export function SettingsCard() {
   
   // Modal state
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     const handler = () => setSettings(readSettings());
@@ -73,6 +74,20 @@ export function SettingsCard() {
           }
         }}
         onCancel={() => setCategoryToDelete(null)}
+      />
+
+      <ConfirmModal
+        isOpen={showResetConfirm}
+        title="Reset All App Data"
+        message="Are you absolutely sure you want to delete all your sessions, categories, and reset all settings? This action cannot be undone."
+        confirmText="Reset Everything"
+        cancelText="Cancel"
+        isDestructive={true}
+        onConfirm={() => {
+          window.localStorage.clear();
+          window.location.reload();
+        }}
+        onCancel={() => setShowResetConfirm(false)}
       />
 
       <div className="mb-6 flex justify-center">
@@ -343,6 +358,24 @@ export function SettingsCard() {
               className="rounded-full border border-[var(--border-subtle)] px-4 py-2 text-xs font-medium hover:bg-[var(--bg-elevated)] transition-colors"
             >
               Export JSON Backup
+            </button>
+          </div>
+        </section>
+
+        {/* Danger Zone Section */}
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" style={{ animationDelay: '600ms' }}>
+          <h3 className="text-xs font-medium uppercase tracking-wide text-red-500/70 mb-3 px-1">Danger Zone</h3>
+          <div className="glass-panel rounded-2xl overflow-hidden p-4 border border-red-500/20 bg-red-500/5">
+            <p className="text-sm text-red-400 mb-2">Reset App Data</p>
+            <p className="text-xs text-[var(--text-muted)] mb-4">
+              This will permanently delete all your sessions, categories, and reset all settings to their defaults. This action cannot be undone.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowResetConfirm(true)}
+              className="rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors shadow-sm"
+            >
+              Reset All Data
             </button>
           </div>
         </section>

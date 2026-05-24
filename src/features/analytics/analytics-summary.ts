@@ -69,7 +69,7 @@ export function buildAnalyticsSummary(
   const perDayFiltered = new Map<number, number>();
   
   for (const record of records) {
-    if (!record.completed) continue;
+    // Process all records (completed and partial)
     
     // Streaks use ALL records
     const dayKey = dayStart(record.completedAtMs);

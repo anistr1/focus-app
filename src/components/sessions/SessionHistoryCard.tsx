@@ -97,6 +97,9 @@ export function SessionHistoryCard() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-[var(--text-primary)]">
                       {entry.intention || "Focus session"}
+                      {!entry.completed && (
+                        <span className="ml-2 text-xs font-normal text-[var(--text-muted)] italic">(Stopped early)</span>
+                      )}
                     </span>
                     <span className="text-xs font-semibold text-[var(--text-primary)]">{formatMinutes(entry.durationMs)}</span>
                   </div>

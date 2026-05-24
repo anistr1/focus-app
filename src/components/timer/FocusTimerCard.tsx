@@ -306,6 +306,28 @@ export function FocusTimerCard() {
           }
         })();
       }
+    } else if (
+      (previousStatus === "running" || previousStatus === "paused") &&
+      (timer.status === "stopped" || timer.status === "idle") &&
+      activeCompletionKey
+    ) {
+      // Stopped early - log the partial focus duration if it is at least 10 seconds
+      if (timer.mode === "focus") {
+        const elapsedMs = timer.focusDurationMs - timer.remainingMs;
+        if (elapsedMs >= 10_000) { // 10 seconds threshold
+          recordCompletedSession(
+            createSessionRecord({
+              durationMs: elapsedMs,
+              completedAtMs: Date.now(),
+              completionKey: activeCompletionKey,
+              intention,
+              categoryId,
+              completed: false
+            })
+          );
+        }
+      }
+      setActiveCompletionKey(null);
     }
     previousStatusRef.current = timer.status;
   }, [activeCompletionKey, notificationsEnabled, timer, intention, categoryId]);
@@ -586,7 +608,6 @@ export function FocusTimerCard() {
                   <button
                     type="button"
                     onClick={() => {
-                      setActiveCompletionKey(null);
                       setTimer((current) => stopTimer(current));
                     }}
                     className="flex items-center justify-center w-12 h-12 rounded-full bg-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-elevated)] transition-transform hover:scale-105 active:scale-95"
@@ -603,9 +624,9 @@ export function FocusTimerCard() {
 
           {/* Recovery / Error Messages */}
           {pendingRecovery ? (
-            <div className="glass-panel absolute z-50 bottom-8 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg max-w-[320px] text-center">
-              <p className="mb-2 text-white">Session interrupted.</p>
-              <div className="flex gap-2 justify-center">
+            <div className="glass-panel absolute z-[100] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl px-6 py-5 text-sm text-[var(--text-secondary)] shadow-2xl max-w-[320px] text-center backdrop-blur-md bg-black/40 border border-white/10 w-[90%]">
+              <p className="mb-4 text-white text-base font-medium">Session interrupted</p>
+              <div className="flex gap-3 justify-center">
                 <button
                   type="button"
                   onClick={resumeFromCheckpoint}
@@ -625,15 +646,35 @@ export function FocusTimerCard() {
           ) : null}
 
           {timer.lastError ? (
-            <p className="glass-panel absolute z-50 bottom-8 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg">
-              {timer.lastError}
-            </p>
+            <div className="glass-panel absolute z-[100] top-4 left-1/2 -translate-x-1/2 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg flex items-center gap-3">
+              <span className="whitespace-nowrap">{timer.lastError}</span>
+              <button 
+                onClick={() => setTimer(current => ({ ...current, lastError: null }))}
+                className="p-1 -mr-1 rounded-full hover:bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0"
+                aria-label="Close error"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           ) : null}
           
           {notificationWarning ? (
-            <p className="glass-panel absolute z-50 bottom-8 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg max-w-[320px] text-center">
-              {notificationWarning}
-            </p>
+            <div className="glass-panel absolute z-[100] top-4 left-1/2 -translate-x-1/2 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg max-w-[320px] flex items-start gap-3">
+              <span className="text-left mt-0.5">{notificationWarning}</span>
+              <button 
+                onClick={() => setNotificationWarning(null)}
+                className="p-1 -mr-1 rounded-full hover:bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0"
+                aria-label="Close warning"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           ) : null}
         </div>
       </div>

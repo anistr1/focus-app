@@ -35,15 +35,19 @@
 }
 
 html,
-body,
-#root {
-  min-height: 100%;
+body {
+  height: 100%;
   margin: 0;
-  background-color: var(--bg-base);
-  color: var(--text-primary);
+  background: transparent !important;
+  overflow: hidden;
 }
 
 #root {
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
   transition: background-color 1.5s ease, background 1.5s ease;
   background-size: 200% 200%;
 }
@@ -286,3 +290,12 @@ select {
 .timer-ring-circle {
   transition: stroke-dashoffset 0.25s linear;
 }
+
+/* Custom Slim Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Option tag styles for custom selects */
+option { background-color: var(--bg-elevated); color: var(--text-primary); }
