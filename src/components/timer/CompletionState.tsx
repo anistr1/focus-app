@@ -1,27 +1,31 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 type CompletionStateProps = {
   mode: "focus" | "break";
   onDismiss: () => void;
   onStartBreak: () => void;
+  onStartFocus: () => void;
+  autoStartBreak?: boolean;
 };
 
-export function CompletionState({ mode, onDismiss, onStartBreak }: CompletionStateProps) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
+export function CompletionState({ 
+  mode, 
+  onDismiss, 
+  onStartBreak, 
+  onStartFocus, 
+  autoStartBreak = false 
+}: CompletionStateProps) {
+  
   useEffect(() => {
-    // Play success sound
-    audioRef.current = new Audio('/audio/success.mp3');
-    audioRef.current.volume = 0.6;
-    audioRef.current.play().catch(e => console.log('Audio playback prevented by browser policy', e));
-
-    // If it's a break that completed, auto-dismiss after a few seconds
-    // to avoid keeping the user in the completion state for too long.
-    if (mode === "break") {
-      const timer = window.setTimeout(onDismiss, 4000);
-      return () => window.clearTimeout(timer);
+    // If it's a focus session and autoStartBreak is enabled,
+    // trigger onStartBreak automatically after a 1.5 second celebration delay.
+    if (autoStartBreak && mode === "focus") {
+      const delayTimer = setTimeout(() => {
+        onStartBreak();
+      }, 1500);
+      return () => clearTimeout(delayTimer);
     }
-  }, [mode, onDismiss]);
+  }, [autoStartBreak, mode, onStartBreak]);
 
   const isFocus = mode === "focus";
 
@@ -79,13 +83,29 @@ export function CompletionState({ mode, onDismiss, onStartBreak }: CompletionSta
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="rounded-full bg-[var(--bg-elevated)] px-8 py-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-surface)] hover:text-white border border-[var(--border-subtle)] transition-colors"
-          >
-            Continue
-          </button>
+          <div className="flex flex-col gap-3 w-full">
+            <button
+              type="button"
+              onClick={onStartFocus}
+              className="rounded-full bg-[var(--bg-elevated)] px-6 py-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-surface)] hover:text-white border border-[var(--border-subtle)] transition-colors w-full"
+            >
+              Start Focus
+            </button>
+            <button
+              type="button"
+              onClick={onStartBreak}
+              className="rounded-full bg-[var(--bg-elevated)]/40 px-6 py-3 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-white border border-[var(--border-subtle)] transition-colors w-full"
+            >
+              Another break
+            </button>
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="rounded-full px-6 py-3 text-sm font-medium text-[var(--text-muted)] hover:text-white transition-colors w-full text-center"
+            >
+              Done for now
+            </button>
+          </div>
         )}
       </div>
     </div>

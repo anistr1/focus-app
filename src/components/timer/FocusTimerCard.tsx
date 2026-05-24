@@ -61,6 +61,9 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
   const [categoryId, setCategoryId] = useState<string>(categories[0]?.id || "");
   const [intention, setIntention] = useState("");
 
+  const lastIntentionRef = useRef<string>("");
+  const pendingAutoBreakRef = useRef<boolean>(false);
+
   const [ritualEnabled, setRitualEnabled] = useState(initialSettings.breathingEnabled);
   const [notificationsEnabled, setNotificationsEnabled] = useState(initialSettings.notificationsEnabled);
   const [autoStartBreak, setAutoStartBreak] = useState(initialSettings.autoStartBreak);
@@ -69,7 +72,6 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
   const [ritualMode, setRitualMode] = useState<"full" | "tray">("full");
   const [pendingRecovery, setPendingRecovery] = useState(() => readCheckpoint(Date.now()));
   const [activeCompletionKey, setActiveCompletionKey] = useState<string | null>(null);
-  const [notificationWarning, setNotificationWarning] = useState<string | null>(null);
   
   const [todayFocusMs, setTodayFocusMs] = useState(() => {
     return buildAnalyticsSummary(readSessionHistory(), "today").periodTotalMs;
@@ -197,6 +199,9 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
               launchTrayMiniRitual();
               return;
             }
+            if (action === "quick-break") {
+              setActiveCompletionKey(`break-${Date.now()}`);
+            }
             setTimer((current) => applyTrayAction(current, action, Date.now()));
           }
         );
@@ -248,10 +253,7 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
       inactivityReminderIdRef.current = window.setTimeout(() => {
         void (async () => {
           const message = messageForEvent("inactivity-reminder");
-          const result = await sendFocusNotification(message.title, message.body);
-          if (result.blocked) {
-            setNotificationWarning(WINDOWS_NOTIFICATION_GUIDANCE);
-          }
+          await sendFocusNotification(message.title, message.body);
           inactivityReminderSentRef.current = true;
         })();
       }, 120_000);
@@ -278,43 +280,48 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
     const previousStatus = previousStatusRef.current;
     if (previousStatus !== "completed" && timer.status === "completed" && activeCompletionKey) {
       const durationMs = timer.mode === "focus" ? timer.focusDurationMs : timer.breakDurationMs;
-      recordCompletedSession(
-        createSessionRecord({
-          durationMs,
-          completedAtMs: Date.now(),
-          completionKey: activeCompletionKey,
-          intention,
-          categoryId
-        })
-      );
+      
+      // Decoupled completion sound
+      const soundFile = timer.mode === "focus"
+        ? "/audio/focus-complete.mp3"
+        : "/audio/break-complete.mp3";
+      const sound = new Audio(soundFile);
+      sound.volume = 0.6;
+      void sound.play().catch(() => {});
+
+      if (timer.mode === "focus") {
+        lastIntentionRef.current = intention;
+        recordCompletedSession(
+          createSessionRecord({
+            durationMs,
+            completedAtMs: Date.now(),
+            completionKey: activeCompletionKey,
+            intention,
+            categoryId
+          })
+        );
+      }
       setActiveCompletionKey(null);
 
       // Auto-start break logic
       if (timer.mode === "focus" && autoStartBreak) {
-        setActiveCompletionKey(`break-${Date.now()}`);
-        setTimer((current) => startTimer(current, Date.now(), "break"));
+        pendingAutoBreakRef.current = true;
       }
 
       if (notificationsEnabled) {
         const completionEvent = timer.mode === "focus" ? "focus-complete" : "break-complete";
         const completionMessage = messageForEvent(completionEvent);
         void (async () => {
-          const completionResult = await sendFocusNotification(
+          await sendFocusNotification(
             completionMessage.title,
             completionMessage.body
           );
-          if (completionResult.blocked) {
-            setNotificationWarning(WINDOWS_NOTIFICATION_GUIDANCE);
-          }
 
           if (timer.mode === "focus") {
             const completedSessions = readSessionHistory().length;
             if (shouldNotifyStreakMilestone(completedSessions)) {
               const streakMessage = buildStreakMilestoneMessage(completedSessions);
-              const milestoneResult = await sendFocusNotification("Streak milestone", streakMessage);
-              if (milestoneResult.blocked) {
-                setNotificationWarning(WINDOWS_NOTIFICATION_GUIDANCE);
-              }
+              await sendFocusNotification("Streak milestone", streakMessage);
             }
           }
         })();
@@ -328,6 +335,13 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
       if (timer.mode === "focus") {
         const elapsedMs = timer.focusDurationMs - timer.remainingMs;
         if (elapsedMs >= 10_000) { // 10 seconds threshold
+          
+          // Soft sound on early stop
+          const earlyStopSound = new Audio("/audio/success.mp3");
+          earlyStopSound.volume = 0.3;
+          void earlyStopSound.play().catch(() => {});
+
+          lastIntentionRef.current = intention;
           recordCompletedSession(
             createSessionRecord({
               durationMs: elapsedMs,
@@ -343,7 +357,7 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
       setActiveCompletionKey(null);
     }
     previousStatusRef.current = timer.status;
-  }, [activeCompletionKey, notificationsEnabled, timer, intention, categoryId]);
+  }, [activeCompletionKey, notificationsEnabled, timer, intention, categoryId, autoStartBreak]);
 
   function launchTrayMiniRitual() {
     setRitualMode("tray");
@@ -411,8 +425,8 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
   
   // Resolve category color for ring/glow
   const selectedCategory = categories.find(c => c.id === categoryId);
-  const catColor = selectedCategory?.color || 'var(--accent)';
-  const catGlow = selectedCategory?.color ? selectedCategory.color : 'var(--accent)';
+  const catColor = timer.mode === "break" ? "var(--success)" : (selectedCategory?.color || 'var(--accent)');
+  const catGlow = timer.mode === "break" ? "var(--success)" : (selectedCategory?.color ? selectedCategory.color : 'var(--accent)');
 
   // SVG Ring calculations
   const totalDurationMs = timer.mode === "focus" ? timer.focusDurationMs : timer.breakDurationMs;
@@ -432,7 +446,7 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
     const miniDashoffset = miniCircumference - pctRemaining * miniCircumference;
 
     return (
-      <div data-tauri-drag-region className="fixed inset-0 w-full h-full flex flex-col items-center justify-center bg-[var(--bg-base)] overflow-hidden cursor-move rounded-xl border border-[var(--border-subtle)]">
+      <div className="fixed inset-0 w-full h-full flex flex-col items-center justify-center bg-[var(--bg-base)] overflow-hidden rounded-xl border border-[var(--border-subtle)]">
         {/* Glow Background */}
         <div 
           className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-[40px]"
@@ -501,13 +515,27 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
         {renderCompletion && !isRitualActive && (
           <CompletionState
             mode={timer.mode}
+            autoStartBreak={pendingAutoBreakRef.current}
             onDismiss={() => {
+              pendingAutoBreakRef.current = false;
               setActiveCompletionKey(null);
-              setTimer((current) => stopTimer(current));
+              if (timer.mode === "break") {
+                setIntention(lastIntentionRef.current);
+                setTimer((current) => setMode(current, "focus"));
+              } else {
+                setTimer((current) => stopTimer(current));
+              }
             }}
             onStartBreak={() => {
+              pendingAutoBreakRef.current = false;
               setActiveCompletionKey(`break-${Date.now()}`);
               setTimer((current) => startTimer(current, Date.now(), "break"));
+            }}
+            onStartFocus={() => {
+              pendingAutoBreakRef.current = false;
+              setIntention(lastIntentionRef.current);
+              setActiveCompletionKey(`focus-${Date.now()}`);
+              setTimer((current) => startTimer(current, Date.now(), "focus"));
             }}
           />
         )}
@@ -528,35 +556,44 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
           />
 
           {/* Top Section: Intention and Category */}
-          <div className="z-20 w-full mb-6 flex flex-col items-center shrink-0">
-            <CategorySelector 
-              categories={categories} 
-              selectedId={categoryId} 
-              onChange={setCategoryId} 
-            />
-            {timer.status === "idle" || timer.status === "stopped" ? (
-              <div className="flex flex-col items-center">
-                <input
-                  type="text"
-                  value={intention}
-                  onChange={(e) => setIntention(e.target.value)}
-                  placeholder="What are you working on?"
-                  className="mt-4 w-full max-w-[280px] rounded-lg border border-transparent bg-transparent px-4 py-2 text-xl font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--border-subtle)] focus:bg-[var(--bg-elevated)] transition-all text-center"
+          <div className="z-20 w-full mb-6 flex flex-col items-center shrink-0 min-h-[88px]">
+            {timer.mode !== "break" && (
+              <>
+                <CategorySelector 
+                  categories={categories} 
+                  selectedId={categoryId} 
+                  onChange={setCategoryId} 
+                  disabled={timer.status === "running"}
                 />
-                {todayFocusMs > 0 && (
-                  <span className="mt-2 text-xs font-medium text-[var(--text-secondary)] opacity-70">
-                    {Math.round(todayFocusMs / 60000)}m focused today
-                  </span>
+                {timer.status === "idle" || timer.status === "stopped" || timer.status === "paused" ? (
+                  <div className="flex flex-col items-center">
+                    <input
+                      type="text"
+                      value={intention}
+                      onChange={(e) => setIntention(e.target.value)}
+                      placeholder="What are you working on?"
+                      className="mt-4 w-full max-w-[280px] rounded-lg border border-transparent bg-transparent px-4 py-2 text-xl font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--border-subtle)] focus:bg-[var(--bg-elevated)] transition-all text-center"
+                    />
+                    {todayFocusMs > 0 && (
+                      <span className="mt-2 text-xs font-medium text-[var(--text-secondary)] opacity-70">
+                        {Math.round(todayFocusMs / 60000)}m focused today
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 mt-4">
+                    {intention ? (
+                      <span className="text-xl font-medium text-[var(--text-primary)]">
+                        {intention}
+                      </span>
+                    ) : (
+                      <span className="text-xl font-medium text-[var(--text-muted)] opacity-60 italic">
+                        No intention set
+                      </span>
+                    )}
+                  </div>
                 )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 mt-4">
-                {intention && (
-                  <span className="text-xl font-medium text-[var(--text-primary)]">
-                    {intention}
-                  </span>
-                )}
-              </div>
+              </>
             )}
           </div>
 
@@ -729,21 +766,7 @@ export function FocusTimerCard({ isMiniWidget = false, onExpand }: FocusTimerCar
             </div>
           ) : null}
           
-          {notificationWarning ? (
-            <div className="glass-panel absolute z-[100] top-4 left-1/2 -translate-x-1/2 rounded-xl px-4 py-3 text-sm text-[var(--text-secondary)] shadow-lg max-w-[320px] flex items-start gap-3">
-              <span className="text-left mt-0.5">{notificationWarning}</span>
-              <button 
-                onClick={() => setNotificationWarning(null)}
-                className="p-1 -mr-1 rounded-full hover:bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0"
-                aria-label="Close warning"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-          ) : null}
+
         </div>
       </div>
     </div>

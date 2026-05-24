@@ -5,9 +5,10 @@ type CategorySelectorProps = {
   categories: Category[];
   selectedId: string;
   onChange: (id: string) => void;
+  disabled?: boolean;
 };
 
-export function CategorySelector({ categories, selectedId, onChange }: CategorySelectorProps) {
+export function CategorySelector({ categories, selectedId, onChange, disabled = false }: CategorySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -55,6 +56,7 @@ export function CategorySelector({ categories, selectedId, onChange }: CategoryS
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
+    if (disabled) return;
     if (!isOpen) {
       if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
         e.preventDefault();
@@ -89,10 +91,15 @@ export function CategorySelector({ categories, selectedId, onChange }: CategoryS
     <div className="relative inline-block text-left" ref={containerRef} onKeyDown={handleKeyDown}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        disabled={disabled}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className="flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-4 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-white transition-colors shadow-sm"
+        className={`flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-4 py-1.5 text-sm font-medium transition-colors shadow-sm ${
+          disabled 
+            ? "opacity-50 cursor-not-allowed text-[var(--text-muted)]" 
+            : "text-[var(--text-secondary)] hover:text-white"
+        }`}
       >
         <span 
           className="h-2 w-2 rounded-full" 

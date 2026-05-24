@@ -156,17 +156,11 @@ export function adjustTime(state: TimerState, deltaMs: number, nowMs: number): T
     return state;
   }
   
-  const isFocus = state.mode === "focus";
-  const newFocusDuration = isFocus ? Math.max(0, state.focusDurationMs + deltaMs) : state.focusDurationMs;
-  const newBreakDuration = !isFocus ? Math.max(0, state.breakDurationMs + deltaMs) : state.breakDurationMs;
-
   if (state.status === "idle" || state.status === "paused") {
     const newRemaining = Math.max(0, state.remainingMs + deltaMs);
     return { 
       ...state, 
-      remainingMs: newRemaining,
-      focusDurationMs: newFocusDuration,
-      breakDurationMs: newBreakDuration
+      remainingMs: newRemaining
     };
   }
 
@@ -179,17 +173,13 @@ export function adjustTime(state: TimerState, deltaMs: number, nowMs: number): T
          ...state,
          status: "completed",
          remainingMs: 0,
-         targetTimeMs: null,
-         focusDurationMs: newFocusDuration,
-         breakDurationMs: newBreakDuration
+         targetTimeMs: null
        };
     }
     return {
       ...state,
       targetTimeMs: newTarget,
-      remainingMs: newRemaining,
-      focusDurationMs: newFocusDuration,
-      breakDurationMs: newBreakDuration
+      remainingMs: newRemaining
     };
   }
   return state;

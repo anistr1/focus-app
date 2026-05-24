@@ -15,23 +15,7 @@ export function AppShell() {
   const [timerStatus, setTimerStatus] = useState("idle");
   const [isMiniWidget, setIsMiniWidget] = useState(false);
 
-  const minimizeWindow = async () => {
-    try {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      await getCurrentWindow().minimize();
-    } catch (e) {
-      console.error("Failed to minimize window:", e);
-    }
-  };
 
-  const closeWindow = async () => {
-    try {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      await getCurrentWindow().close();
-    } catch (e) {
-      console.error("Failed to close window:", e);
-    }
-  };
 
   const toggleMiniWidget = async () => {
     try {
@@ -73,7 +57,7 @@ export function AppShell() {
   }, []);
 
   return (
-    <main className="flex h-screen overflow-hidden bg-transparent select-none">
+    <main className="flex w-full h-full overflow-hidden bg-transparent select-none">
       {/* Left Navigation Sidebar - Hidden in mini mode */}
       {!isMiniWidget && (
         <nav className="flex w-14 shrink-0 flex-col items-center justify-between border-r border-[var(--border-subtle)] bg-[var(--bg-base)] py-6 z-50">
@@ -129,7 +113,24 @@ export function AppShell() {
             </button>
           </div>
           
-          <div>
+          <div className="flex flex-col items-center gap-2">
+            <div className="scale-75 origin-bottom">
+               <UpdateStatusCard />
+            </div>
+            
+            <button
+              onClick={toggleMiniWidget}
+              className="flex flex-col items-center justify-center p-2.5 rounded-xl transition-all cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]"
+              title="Mini Widget"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 14h6v6"></path>
+                <path d="M20 10h-6V4"></path>
+                <path d="M14 10l7-7"></path>
+                <path d="M3 21l7-7"></path>
+              </svg>
+            </button>
+
             <button
               onClick={() => setActiveTab("settings")}
               className={`flex flex-col items-center justify-center p-2.5 rounded-xl transition-all cursor-pointer ${
@@ -150,66 +151,7 @@ export function AppShell() {
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden relative bg-[var(--bg-base)]">
-        {/* Premium Borderless Title Bar - Hidden in mini mode */}
-        {!isMiniWidget && (
-          <div className="flex h-12 shrink-0 items-center justify-between pl-4 pr-3 border-b border-[var(--border-subtle)] bg-[var(--bg-base)] z-50 select-none">
-            <div data-tauri-drag-region className="flex items-center gap-2 pointer-events-none">
-              {/* Logo and App Name */}
-              <span className="text-xs font-semibold tracking-wider text-[var(--accent)] flex items-center gap-1.5 opacity-80">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin-slow">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M12 2a7 7 0 1 0 10 10"></path>
-                </svg>
-                Focus
-              </span>
-            </div>
 
-            <div data-tauri-drag-region className="flex-1 h-full cursor-move mx-2"></div>
-            
-            <div className="flex items-center gap-1 relative z-50">
-              <div className="scale-75 origin-right mr-1">
-                 <UpdateStatusCard />
-              </div>
-              
-              {/* Shrink Button */}
-              <button 
-                onClick={toggleMiniWidget}
-                className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] transition-all cursor-pointer"
-                title="Mini Widget"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 14h6v6"></path>
-                  <path d="M20 10h-6V4"></path>
-                  <path d="M14 10l7-7"></path>
-                  <path d="M3 21l7-7"></path>
-                </svg>
-              </button>
-
-              {/* Minimize Button */}
-              <button 
-                onClick={minimizeWindow}
-                className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] transition-all cursor-pointer"
-                title="Minimize"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-              </button>
-              
-              {/* Close Button */}
-              <button 
-                onClick={closeWindow}
-                className="p-1 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
-                title="Close"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
 
         <div className="flex-1 relative overflow-hidden bg-transparent">
           <div className={`absolute inset-0 overflow-y-auto overflow-x-hidden ${!isMiniWidget ? 'px-6 pb-6 pt-6' : ''} transition-all duration-500 ease-out ${activeTab === "timer" ? "opacity-100 translate-y-0 z-10" : "opacity-0 translate-y-2 pointer-events-none z-0"}`}>
